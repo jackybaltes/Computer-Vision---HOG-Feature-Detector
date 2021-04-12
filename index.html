@@ -1,0 +1,2466 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+        <title>Computer Vision - HOG Feature Detector</title>
+
+        <link rel="stylesheet" href="css/reveal.css">
+        <link rel="stylesheet" href="css/theme/ntnuerc.css">
+
+        <!-- Theme used for syntax highlighting of code -->
+        <link rel="stylesheet" href="lib/css/zenburn.css">
+        <script src="https://daybrush.com/scenejs/release/latest/dist/scene.min.js"></script>
+		
+        <!-- Printing and PDF exports -->
+        <script>
+            var link = document.createElement( 'link' );
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+            document.getElementsByTagName( 'head' )[0].appendChild( link );
+        </script>
+        <script src="js/ntnu.js"></script>
+    </head>
+    <body>
+        <div class="reveal">
+        <div class="slides">
+            
+<section id="first" data-state="first">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+
+<div class="jb-output-code jb-render">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-output jb-render">
+
+<h1> Computer Vision - HOG Feature Detector</h1>
+
+   <div class="author" style="text-align:center;">
+    
+<p>
+      Jacky Baltes<br>
+      National Taiwan Normal University<br>
+      Taipei, Taiwan<br>
+      <a href="mailto:jacky.baltes@ntnu.edu.tw">jacky.baltes@ntnu.edu.tw</a><br>
+</p>
+
+   </div>
+   <div class="date">
+    12 April 2021
+   </div>
+</div><!-- end of jb-output jb-render -->
+</div><!-- end of jb-output-code jb-render -->
+
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-6df19e98-06fe-47c7-b624-e27ecb95fc8e" ><span id="id-6df19e98-06fe-47c7-b624-e27ecb95fc8e"><img id="img-id-6df19e98-06fe-47c7-b624-e27ecb95fc8e"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-353d7e28-8772-4585-b107-454b0a39b8c0" ><span id="id-353d7e28-8772-4585-b107-454b0a39b8c0"><img id="img-id-353d7e28-8772-4585-b107-454b0a39b8c0" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00003_frag_00001" data-state="slide_00003_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+<div class="jb-input jb-render jb-code" style="text-align:center">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-input-code jb-render">
+<div class="highlight" style="background: #f8f8f8; color:#101010;display=inline-block;"><pre style="line-height: 125%"><span></span>fig <span style="color: #666666">=</span> plt<span style="color: #666666">.</span>figure( figsize<span style="color: #666666">=</span>(<span style="color: #666666">12</span>,<span style="color: #666666">12</span>) )
+ax <span style="color: #666666">=</span> fig<span style="color: #666666">.</span>add_subplot(<span style="color: #666666">1</span>,<span style="color: #666666">1</span>,<span style="color: #666666">1</span>)
+
+t1Img <span style="color: #666666">=</span> Image<span style="color: #666666">.</span>open( target1<span style="color: #666666">.</span>getLocalName() )
+ax<span style="color: #666666">.</span>imshow( t1Img )
+
+roi <span style="color: #666666">=</span> [ [ <span style="color: #666666">217</span>, <span style="color: #666666">225</span>], [ <span style="color: #666666">149</span>, <span style="color: #666666">157</span> ] ]
+ax<span style="color: #666666">.</span>plot( [ roi[<span style="color: #666666">0</span>][<span style="color: #666666">0</span>], roi[<span style="color: #666666">0</span>][<span style="color: #666666">1</span>] ], [ roi[<span style="color: #666666">1</span>][<span style="color: #666666">0</span>], roi[<span style="color: #666666">1</span>][<span style="color: #666666">0</span>] ], <span style="color: #BA2121">&#39;b-&#39;</span>  )
+ax<span style="color: #666666">.</span>plot( [ roi[<span style="color: #666666">0</span>][<span style="color: #666666">0</span>], roi[<span style="color: #666666">0</span>][<span style="color: #666666">1</span>] ], [ roi[<span style="color: #666666">1</span>][<span style="color: #666666">1</span>], roi[<span style="color: #666666">1</span>][<span style="color: #666666">1</span>] ], <span style="color: #BA2121">&#39;b-&#39;</span>  )
+ax<span style="color: #666666">.</span>plot( [ roi[<span style="color: #666666">0</span>][<span style="color: #666666">0</span>], roi[<span style="color: #666666">0</span>][<span style="color: #666666">0</span>] ], [ roi[<span style="color: #666666">1</span>][<span style="color: #666666">0</span>], roi[<span style="color: #666666">1</span>][<span style="color: #666666">1</span>] ], <span style="color: #BA2121">&#39;b-&#39;</span>  )
+ax<span style="color: #666666">.</span>plot( [ roi[<span style="color: #666666">0</span>][<span style="color: #666666">1</span>], roi[<span style="color: #666666">0</span>][<span style="color: #666666">1</span>] ], [ roi[<span style="color: #666666">1</span>][<span style="color: #666666">0</span>], roi[<span style="color: #666666">1</span>][<span style="color: #666666">1</span>] ], <span style="color: #BA2121">&#39;b-&#39;</span>  )
+
+s2<span style="color: #666666">=</span>addJBFigure(<span style="color: #BA2121">&quot;s2&quot;</span>, <span style="color: #666666">0</span>, <span style="color: #666666">0</span>, fig )
+plt<span style="color: #666666">.</span>close()
+</pre></div>
+
+</div><!-- end of jb-input-code jb-render -->
+
+</div>
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-2e967a3c-f0c5-41bf-89a4-05d8509db1a8" ><span id="id-2e967a3c-f0c5-41bf-89a4-05d8509db1a8"><img id="img-id-2e967a3c-f0c5-41bf-89a4-05d8509db1a8"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-26e30e8a-b968-436d-ade5-5ebe247d286f" ><span id="id-26e30e8a-b968-436d-ade5-5ebe247d286f"><img id="img-id-26e30e8a-b968-436d-ade5-5ebe247d286f" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00004_frag_00001" data-state="slide_00004_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+
+<div class="jb-output-code jb-render">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-output jb-render">
+
+<h1>Humanoid Robot Archery</h1>
+
+<div class="jb-text">
+<p>One of the research projects in the Educational Robotics Lab (ERC) at the National Taiwan Normal University (NTNU) 
+is the development of Olympic caliber robot athletes</p>
+
+<p>We are investigating archery robots as a benchmark problem for AI</p>
+
+<p>Target detection is an important aspect of this research</p>
+</div>
+
+<span id="id-f88d1d4e-5c96-437f-a286-0871a1e1c75d" ><span id="id-f88d1d4e-5c96-437f-a286-0871a1e1c75d"><img id="img-id-f88d1d4e-5c96-437f-a286-0871a1e1c75d"     src="assets/images/s2.svg"/></span>
+</span>
+</div><!-- end of jb-output jb-render -->
+</div><!-- end of jb-output-code jb-render -->
+
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-89ab07b8-fe44-42fe-bed2-a328d63a048f" ><span id="id-89ab07b8-fe44-42fe-bed2-a328d63a048f"><img id="img-id-89ab07b8-fe44-42fe-bed2-a328d63a048f"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-c922dfd7-335c-4e80-a85b-f40ff18a212a" ><span id="id-c922dfd7-335c-4e80-a85b-f40ff18a212a"><img id="img-id-c922dfd7-335c-4e80-a85b-f40ff18a212a" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00005_frag_00001" data-state="slide_00005_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+<div class="jb-input jb-render jb-code" style="text-align:center">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-input-code jb-render">
+<div class="highlight" style="background: #f8f8f8; color:#101010;display=inline-block;"><pre style="line-height: 125%"><span></span><span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">checkThresholds</span>( img, minA, maxA, seed <span style="color: #666666">=</span> [<span style="color: #666666">255</span>,<span style="color: #666666">0</span>,<span style="color: #666666">0</span>] ):
+    t1 <span style="color: #666666">=</span> img <span style="color: #666666">&gt;=</span> minA
+    <span style="color: #408080; font-style: italic">#print(&#39;t1&#39;, t1)</span>
+    t2 <span style="color: #666666">=</span> img <span style="color: #666666">&lt;=</span> maxA
+    <span style="color: #408080; font-style: italic">#print(&#39;t2&#39;, t2)</span>
+    t3 <span style="color: #666666">=</span> np<span style="color: #666666">.</span>logical_and( t1, t2 )
+    <span style="color: #408080; font-style: italic">#print(&#39;t3&#39;, t3)</span>
+    t4 <span style="color: #666666">=</span> np<span style="color: #666666">.</span>all( t3, axis<span style="color: #666666">=2</span> )
+    <span style="color: #408080; font-style: italic">#print(&#39;t4&#39;, t4 )</span>
+    img2 <span style="color: #666666">=</span> img<span style="color: #666666">.</span>copy()
+    img2[ t4 <span style="color: #666666">==</span> <span style="color: #008000; font-weight: bold">True</span> ] <span style="color: #666666">=</span> seed
+
+    img2[<span style="color: #666666">0</span>:<span style="color: #666666">10</span>,<span style="color: #666666">0</span>:<span style="color: #666666">10</span>] <span style="color: #666666">=</span> seed
+    <span style="color: #408080; font-style: italic">#print(img2)</span>
+    
+    <span style="color: #008000; font-weight: bold">return</span> img2
+<span style="color: #408080; font-style: italic">#print( np.all( np.array( [ 190, 190, 120 ] ) &gt; iMin ) )</span>
+</pre></div>
+
+</div><!-- end of jb-input-code jb-render -->
+
+</div>
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-dd532837-5aeb-43bf-9e84-b003cf071ded" ><span id="id-dd532837-5aeb-43bf-9e84-b003cf071ded"><img id="img-id-dd532837-5aeb-43bf-9e84-b003cf071ded"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-f34c58cc-3e10-40f7-8732-9c701764cf1c" ><span id="id-f34c58cc-3e10-40f7-8732-9c701764cf1c"><img id="img-id-f34c58cc-3e10-40f7-8732-9c701764cf1c" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00006_frag_00001" data-state="slide_00006_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+<div class="jb-input jb-render jb-code" style="text-align:center">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-input-code jb-render">
+<div class="highlight" style="background: #f8f8f8; color:#101010;display=inline-block;"><pre style="line-height: 125%"><span></span><span style="color: #408080; font-style: italic"># [ 217, 225], [ 149, 157 ]</span>
+
+img <span style="color: #666666">=</span> np<span style="color: #666666">.</span>array( t1Img )
+roi <span style="color: #666666">=</span> img[ <span style="color: #666666">149</span>:<span style="color: #666666">157</span>, <span style="color: #666666">217</span>:<span style="color: #666666">225</span> ]
+
+iMin <span style="color: #666666">=</span> np<span style="color: #666666">.</span>min( roi, axis<span style="color: #666666">=</span>(<span style="color: #666666">0</span>,<span style="color: #666666">1</span>) )
+iMax <span style="color: #666666">=</span> np<span style="color: #666666">.</span>max( roi, axis<span style="color: #666666">=</span>(<span style="color: #666666">0</span>,<span style="color: #666666">1</span>) )
+
+test <span style="color: #666666">=</span> np<span style="color: #666666">.</span>array( [ [ [<span style="color: #666666">1</span>, <span style="color: #666666">1</span>, <span style="color: #666666">1</span>], [<span style="color: #666666">200</span>, <span style="color: #666666">200</span>, <span style="color: #666666">0</span> ] ], [ [<span style="color: #666666">200</span>, <span style="color: #666666">200</span>, <span style="color: #666666">90</span> ], [ <span style="color: #666666">215</span>, <span style="color: #666666">212</span>, <span style="color: #666666">100</span> ] ] ] )
+
+img2 <span style="color: #666666">=</span> checkThresholds( img, iMin, iMax )
+
+fig <span style="color: #666666">=</span> plt<span style="color: #666666">.</span>figure( figsize<span style="color: #666666">=</span>(<span style="color: #666666">15</span>, <span style="color: #666666">15</span> ) )
+ax <span style="color: #666666">=</span> fig<span style="color: #666666">.</span>add_subplot( <span style="color: #666666">1</span>, <span style="color: #666666">1</span>, <span style="color: #666666">1</span>)
+ax<span style="color: #666666">.</span>imshow( img2 )
+
+s1 <span style="color: #666666">=</span> addJBFigure(<span style="color: #BA2121">&quot;s1&quot;</span>, <span style="color: #666666">0</span>, <span style="color: #666666">0</span>, fig)
+plt<span style="color: #666666">.</span>close()
+</pre></div>
+
+</div><!-- end of jb-input-code jb-render -->
+
+</div>
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-17d9259c-b9b8-4794-aaf6-fa7342153f11" ><span id="id-17d9259c-b9b8-4794-aaf6-fa7342153f11"><img id="img-id-17d9259c-b9b8-4794-aaf6-fa7342153f11"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-92c71ac0-806d-482f-8750-cdf0b3e2281c" ><span id="id-92c71ac0-806d-482f-8750-cdf0b3e2281c"><img id="img-id-92c71ac0-806d-482f-8750-cdf0b3e2281c" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00007_frag_00001" data-state="slide_00007_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+
+<div class="jb-output-code jb-render">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-output jb-render">
+
+<h1>Color Predicate: RGB</h1>
+
+<div class="jb-text">
+<p>As can be seen, detecting the targets using a color predicate is error prone.</p>
+<p>In the image only some yellow pixels are identified, but we already have a lot of false positives</p>
+</div>
+
+<span id="id-c72c403c-f3cc-4a13-96e2-4bae3c3d0389" ><span id="id-c72c403c-f3cc-4a13-96e2-4bae3c3d0389"><img id="img-id-c72c403c-f3cc-4a13-96e2-4bae3c3d0389"     src="assets/images/s1.svg"/></span>
+</span>
+</div><!-- end of jb-output jb-render -->
+</div><!-- end of jb-output-code jb-render -->
+
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-04175317-1e66-4453-839f-e492fd4fbcf0" ><span id="id-04175317-1e66-4453-839f-e492fd4fbcf0"><img id="img-id-04175317-1e66-4453-839f-e492fd4fbcf0"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-4851b464-c25b-4cfb-b89b-ad305748dbac" ><span id="id-4851b464-c25b-4cfb-b89b-ad305748dbac"><img id="img-id-4851b464-c25b-4cfb-b89b-ad305748dbac" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00008_frag_00001" data-state="slide_00008_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+<div class="jb-input jb-render jb-code" style="text-align:center">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-input-code jb-render">
+<div class="highlight" style="background: #f8f8f8; color:#101010;display=inline-block;"><pre style="line-height: 125%"><span></span><span style="color: #408080; font-style: italic"># [ 217, 225], [ 149, 157 ]</span>
+
+t1Img <span style="color: #666666">=</span> Image<span style="color: #666666">.</span>open( target1<span style="color: #666666">.</span>getLocalName() )
+img <span style="color: #666666">=</span> np<span style="color: #666666">.</span>array(t1Img)
+<span style="color: #408080; font-style: italic">#print(img.shape, img.dtype, img[0:4,0:4])</span>
+
+img <span style="color: #666666">=</span> mcolors<span style="color: #666666">.</span>rgb_to_hsv( img )
+roi <span style="color: #666666">=</span> img[ <span style="color: #666666">149</span>:<span style="color: #666666">157</span>, <span style="color: #666666">217</span>:<span style="color: #666666">225</span> ]
+<span style="color: #408080; font-style: italic">#print(img.shape, img.dtype, img[0:4,0:4])</span>
+<span style="color: #408080; font-style: italic">#roi = img[ 149:157, 217:225 ]</span>
+
+iMin <span style="color: #666666">=</span> np<span style="color: #666666">.</span>min( roi, axis<span style="color: #666666">=</span>(<span style="color: #666666">0</span>,<span style="color: #666666">1</span>) )
+iMax <span style="color: #666666">=</span> np<span style="color: #666666">.</span>max( roi, axis<span style="color: #666666">=</span>(<span style="color: #666666">0</span>,<span style="color: #666666">1</span>) )
+
+<span style="color: #408080; font-style: italic">#print(iMin, iMax)</span>
+
+test <span style="color: #666666">=</span> np<span style="color: #666666">.</span>array( [ [ [<span style="color: #666666">1</span>, <span style="color: #666666">1</span>, <span style="color: #666666">1</span>], [<span style="color: #666666">200</span>, <span style="color: #666666">200</span>, <span style="color: #666666">0</span> ] ], [ [<span style="color: #666666">200</span>, <span style="color: #666666">200</span>, <span style="color: #666666">90</span> ], [ <span style="color: #666666">215</span>, <span style="color: #666666">212</span>, <span style="color: #666666">100</span> ] ] ] )
+
+np_img2 <span style="color: #666666">=</span> checkThresholds( img, iMin, iMax, seed<span style="color: #666666">=</span>[<span style="color: #666666">0</span>,<span style="color: #666666">255</span>,<span style="color: #666666">255</span>] )
+img2 <span style="color: #666666">=</span> mcolors<span style="color: #666666">.</span>hsv_to_rgb( np_img2 )<span style="color: #666666">/256.0</span>
+<span style="color: #408080; font-style: italic">#print(img2.shape, img2.dtype, img2[0:4,0:4])</span>
+
+fig <span style="color: #666666">=</span> plt<span style="color: #666666">.</span>figure( figsize<span style="color: #666666">=</span>(<span style="color: #666666">15</span>, <span style="color: #666666">15</span> ) )
+ax <span style="color: #666666">=</span> fig<span style="color: #666666">.</span>add_subplot( <span style="color: #666666">1</span>, <span style="color: #666666">1</span>, <span style="color: #666666">1</span>)
+ax<span style="color: #666666">.</span>imshow( img2 )
+
+s11 <span style="color: #666666">=</span> addJBFigure(<span style="color: #BA2121">&quot;s11&quot;</span>, <span style="color: #666666">0</span>, <span style="color: #666666">0</span>, fig)
+plt<span style="color: #666666">.</span>close()
+</pre></div>
+
+</div><!-- end of jb-input-code jb-render -->
+
+</div>
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-408e7e56-ea86-4cd5-adc1-4e97559ba798" ><span id="id-408e7e56-ea86-4cd5-adc1-4e97559ba798"><img id="img-id-408e7e56-ea86-4cd5-adc1-4e97559ba798"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-a152775b-50b6-48b3-abe0-1abd7b4b4237" ><span id="id-a152775b-50b6-48b3-abe0-1abd7b4b4237"><img id="img-id-a152775b-50b6-48b3-abe0-1abd7b4b4237" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00009_frag_00001" data-state="slide_00009_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+
+<div class="jb-output-code jb-render">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-output jb-render">
+
+<h1>Color Predicate: HSV</h1>
+
+<div class="jb-text">
+</div>
+
+<span id="id-2dd41bdf-cb0b-470b-a001-16cfae0b361d" ><span id="id-2dd41bdf-cb0b-470b-a001-16cfae0b361d"><img id="img-id-2dd41bdf-cb0b-470b-a001-16cfae0b361d"     src="assets/images/s11.svg"/></span>
+</span>
+</div><!-- end of jb-output jb-render -->
+</div><!-- end of jb-output-code jb-render -->
+
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-c297f8e1-cd95-47e5-b50a-1b3915fb8eb8" ><span id="id-c297f8e1-cd95-47e5-b50a-1b3915fb8eb8"><img id="img-id-c297f8e1-cd95-47e5-b50a-1b3915fb8eb8"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-fc1e3a5b-bf86-4296-ba11-f064e37e342c" ><span id="id-fc1e3a5b-bf86-4296-ba11-f064e37e342c"><img id="img-id-fc1e3a5b-bf86-4296-ba11-f064e37e342c" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00010_frag_00001" data-state="slide_00010_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+
+<div class="jb-output-code jb-render">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-output jb-render">
+
+<h1>Some ideas for improvement</h1>
+
+<div class="jb-text">
+<p>In this problem, we have still some room for small improvements</p>
+<ul>
+<li>Use blue instead of yellow colour in natural scenes. Does not work
+so well for artificial lighting/movies</li>
+<li>Extend color space to use RGB and difference channels</li>
+<li>Group coloured pixels using different colors</li>
+</ul>
+</div>
+</div><!-- end of jb-output jb-render -->
+</div><!-- end of jb-output-code jb-render -->
+
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-e323484b-d006-489d-8eed-873de4006ffd" ><span id="id-e323484b-d006-489d-8eed-873de4006ffd"><img id="img-id-e323484b-d006-489d-8eed-873de4006ffd"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-3a977134-431f-42f3-9c0d-58db2eaf78c6" ><span id="id-3a977134-431f-42f3-9c0d-58db2eaf78c6"><img id="img-id-3a977134-431f-42f3-9c0d-58db2eaf78c6" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00011_frag_00001" data-state="slide_00011_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+
+<div class="jb-output-code jb-render">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-output jb-render">
+
+<h1>Image Gradients</h1>
+
+<div class="jb-text">
+<p>Shape detection is commonly based on edge detection. See Hough transform
+to detect circles</p>
+
+<p>The gradient provides important information about the shapes in the image</p>
+</div>
+</div><!-- end of jb-output jb-render -->
+</div><!-- end of jb-output-code jb-render -->
+
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-777f5a9a-8e8f-40b2-8f52-715b4bc97135" ><span id="id-777f5a9a-8e8f-40b2-8f52-715b4bc97135"><img id="img-id-777f5a9a-8e8f-40b2-8f52-715b4bc97135"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-00c3d4cb-73e0-4687-9de1-56a6b04cc330" ><span id="id-00c3d4cb-73e0-4687-9de1-56a6b04cc330"><img id="img-id-00c3d4cb-73e0-4687-9de1-56a6b04cc330" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00012_frag_00001" data-state="slide_00012_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+<div class="jb-input jb-render jb-code" style="text-align:center">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-input-code jb-render">
+<div class="highlight" style="background: #f8f8f8; color:#101010;display=inline-block;"><pre style="line-height: 125%"><span></span><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">math</span>
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">showGradient</span>( img, step <span style="color: #666666">=</span> <span style="color: #666666">10</span>, scale <span style="color: #666666">=</span> <span style="color: #666666">1.0</span>, ax <span style="color: #666666">=</span> <span style="color: #008000; font-weight: bold">None</span> ):
+    gradX <span style="color: #666666">=</span> cv2<span style="color: #666666">.</span>Sobel( img, cv2<span style="color: #666666">.</span>CV_32F, <span style="color: #666666">1</span>, <span style="color: #666666">0</span>, ksize<span style="color: #666666">=3</span>)
+    gradY <span style="color: #666666">=</span> cv2<span style="color: #666666">.</span>Sobel( img, cv2<span style="color: #666666">.</span>CV_32F, <span style="color: #666666">0</span>, <span style="color: #666666">1</span>, ksize<span style="color: #666666">=3</span>)
+    
+    mag, angle <span style="color: #666666">=</span> cv2<span style="color: #666666">.</span>cartToPolar( gradX, gradY )
+    height, width <span style="color: #666666">=</span> img<span style="color: #666666">.</span>shape 
+    
+    <span style="color: #008000; font-weight: bold">for</span> y <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>(<span style="color: #666666">0</span>, height, step ):
+        <span style="color: #008000; font-weight: bold">for</span> x <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>( <span style="color: #666666">0</span>, width, step ):
+            t <span style="color: #666666">=</span> angle[y,x]
+            m <span style="color: #666666">=</span> mag[y,x]
+            
+            <span style="color: #008000; font-weight: bold">if</span> ( ax ):
+                eX <span style="color: #666666">=</span> x <span style="color: #666666">+</span> math<span style="color: #666666">.</span>cos( t ) <span style="color: #666666">*</span> m <span style="color: #666666">*</span> scale
+                eY <span style="color: #666666">=</span> y <span style="color: #666666">+</span> math<span style="color: #666666">.</span>sin( t ) <span style="color: #666666">*</span> m <span style="color: #666666">*</span> scale
+
+                ax<span style="color: #666666">.</span>plot( [x, eX ], [ y, eY ], <span style="color: #BA2121">&#39;g-&#39;</span> )
+    <span style="color: #008000; font-weight: bold">return</span> mag, angle
+</pre></div>
+
+</div><!-- end of jb-input-code jb-render -->
+
+</div>
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-31cd9e33-084e-417a-ba4f-936b7aa6aa22" ><span id="id-31cd9e33-084e-417a-ba4f-936b7aa6aa22"><img id="img-id-31cd9e33-084e-417a-ba4f-936b7aa6aa22"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-1eb965f0-b1e1-446b-8a4f-99de13911613" ><span id="id-1eb965f0-b1e1-446b-8a4f-99de13911613"><img id="img-id-1eb965f0-b1e1-446b-8a4f-99de13911613" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00013_frag_00001" data-state="slide_00013_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+
+<div class="jb-output-code jb-render">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-output jb-render">
+<div class="document" id="histogram-of-oriented-gradients">
+<h1 class="title">Histogram of Oriented Gradients</h1>
+<div class="jb-text docutils container">
+<p>Accumulate nearby gradient information into a descriptor</p>
+<p><a class="reference external" href="http://lear.inrialpes.fr/pubs/2006/DTS06/eccv2006.pdf">Dalal and Triggs</a> proposed HOG features for detection of complex shapes (pedestrian detection)</p>
+</div>
+</div>
+
+</div><!-- end of jb-output jb-render -->
+</div><!-- end of jb-output-code jb-render -->
+
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-7f8f5956-06c0-4a76-aa97-f3db7d91bdae" ><span id="id-7f8f5956-06c0-4a76-aa97-f3db7d91bdae"><img id="img-id-7f8f5956-06c0-4a76-aa97-f3db7d91bdae"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-c87e39f2-d4c7-42c5-acfd-b76217dfbab3" ><span id="id-c87e39f2-d4c7-42c5-acfd-b76217dfbab3"><img id="img-id-c87e39f2-d4c7-42c5-acfd-b76217dfbab3" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00014_frag_00001" data-state="slide_00014_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+<div class="jb-input jb-render jb-code" style="text-align:center">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-input-code jb-render">
+<div class="highlight" style="background: #f8f8f8; color:#101010;display=inline-block;"><pre style="line-height: 125%"><span></span><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">cv2</span>
+<span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">skimage</span> <span style="color: #008000; font-weight: bold">import</span> io
+
+img <span style="color: #666666">=</span> io<span style="color: #666666">.</span>imread( target1<span style="color: #666666">.</span>getLocalName() )
+gImg <span style="color: #666666">=</span> cv2<span style="color: #666666">.</span>cvtColor( img, cv2<span style="color: #666666">.</span>COLOR_BGR2GRAY)
+
+grayImg <span style="color: #666666">=</span> np<span style="color: #666666">.</span>float32( gImg ) <span style="color: #666666">/</span> <span style="color: #666666">255.0</span> 
+
+<span style="color: #408080; font-style: italic">#print(grayImg[0:3,0:5] )</span>
+
+
+fig <span style="color: #666666">=</span> plt<span style="color: #666666">.</span>figure( figsize<span style="color: #666666">=</span>(<span style="color: #666666">15</span>, <span style="color: #666666">15</span>) )
+ax <span style="color: #666666">=</span> fig<span style="color: #666666">.</span>add_subplot(<span style="color: #666666">1</span>,<span style="color: #666666">1</span>,<span style="color: #666666">1</span>)
+
+ax<span style="color: #666666">.</span>imshow( grayImg, cmap<span style="color: #666666">=</span><span style="color: #BA2121">&#39;gray&#39;</span> )
+
+mag, angle <span style="color: #666666">=</span> showGradient( grayImg, <span style="color: #666666">5</span>, <span style="color: #666666">10</span>, ax )
+m1 <span style="color: #666666">=</span> addJBFigure(<span style="color: #BA2121">&quot;m1&quot;</span>, <span style="color: #666666">0</span>, <span style="color: #666666">0</span>, fig )
+plt<span style="color: #666666">.</span>close()
+</pre></div>
+
+</div><!-- end of jb-input-code jb-render -->
+
+</div>
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-c890142b-952d-464a-afd8-392a2dda5b8c" ><span id="id-c890142b-952d-464a-afd8-392a2dda5b8c"><img id="img-id-c890142b-952d-464a-afd8-392a2dda5b8c"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-f3f1d125-0be5-4185-a1df-57ed5815a303" ><span id="id-f3f1d125-0be5-4185-a1df-57ed5815a303"><img id="img-id-f3f1d125-0be5-4185-a1df-57ed5815a303" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00015_frag_00001" data-state="slide_00015_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+
+<div class="jb-output-code jb-render">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-output jb-render">
+
+<h1>Gradient Information</h1>
+
+<span id="id-427bd6b7-0383-4a99-94bb-a3c03463c8d3" ><span id="id-427bd6b7-0383-4a99-94bb-a3c03463c8d3"><img id="img-id-427bd6b7-0383-4a99-94bb-a3c03463c8d3"     src="assets/images/m1.svg"/></span>
+</span>
+</div><!-- end of jb-output jb-render -->
+</div><!-- end of jb-output-code jb-render -->
+
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-706f92b3-0871-4ca3-b631-e4d1f78e7540" ><span id="id-706f92b3-0871-4ca3-b631-e4d1f78e7540"><img id="img-id-706f92b3-0871-4ca3-b631-e4d1f78e7540"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-8734cc90-5cba-464a-84fe-dbe2ca485cb8" ><span id="id-8734cc90-5cba-464a-84fe-dbe2ca485cb8"><img id="img-id-8734cc90-5cba-464a-84fe-dbe2ca485cb8" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00016_frag_00001" data-state="slide_00016_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+<div class="jb-input jb-render jb-code" style="text-align:center">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-input-code jb-render">
+<div class="highlight" style="background: #f8f8f8; color:#101010;display=inline-block;"><pre style="line-height: 125%"><span></span>target2 <span style="color: #666666">=</span> grayImg[ <span style="color: #666666">100</span>:<span style="color: #666666">250</span>, <span style="color: #666666">150</span>:<span style="color: #666666">300</span> ]
+fig <span style="color: #666666">=</span> plt<span style="color: #666666">.</span>figure( figsize<span style="color: #666666">=</span>(<span style="color: #666666">15</span>, <span style="color: #666666">15</span>) )
+ax <span style="color: #666666">=</span> fig<span style="color: #666666">.</span>add_subplot(<span style="color: #666666">1</span>,<span style="color: #666666">1</span>,<span style="color: #666666">1</span>)
+
+height, width <span style="color: #666666">=</span> target2<span style="color: #666666">.</span>shape
+
+step <span style="color: #666666">=</span> <span style="color: #666666">16</span> 
+
+x <span style="color: #666666">=</span> [ i <span style="color: #008000; font-weight: bold">for</span> i <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>(<span style="color: #666666">0</span>, width, step ) ]
+y <span style="color: #666666">=</span> [ i <span style="color: #008000; font-weight: bold">for</span> i <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>(<span style="color: #666666">0</span>, height, step ) ]
+
+x,y <span style="color: #666666">=</span> np<span style="color: #666666">.</span>meshgrid( x, y )
+
+ax<span style="color: #666666">.</span>imshow( target2, cmap<span style="color: #666666">=</span><span style="color: #BA2121">&#39;gray&#39;</span> )
+ax<span style="color: #666666">.</span>plot( x, y, <span style="color: #BA2121">&#39;b-&#39;</span> )
+ax<span style="color: #666666">.</span>plot( y, x, <span style="color: #BA2121">&#39;b-&#39;</span> )
+mag, angle <span style="color: #666666">=</span> showGradient( target2, <span style="color: #666666">2</span>, <span style="color: #666666">5</span>, ax )
+
+m2 <span style="color: #666666">=</span> addJBFigure(<span style="color: #BA2121">&quot;m2&quot;</span>, <span style="color: #666666">0</span>, <span style="color: #666666">0</span>, fig )
+plt<span style="color: #666666">.</span>close()
+</pre></div>
+
+</div><!-- end of jb-input-code jb-render -->
+
+</div>
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-9aa83c3d-cd9c-446f-8f95-75bd059ad9d7" ><span id="id-9aa83c3d-cd9c-446f-8f95-75bd059ad9d7"><img id="img-id-9aa83c3d-cd9c-446f-8f95-75bd059ad9d7"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-0efb2d42-5652-4e0b-97e2-d670478177c9" ><span id="id-0efb2d42-5652-4e0b-97e2-d670478177c9"><img id="img-id-0efb2d42-5652-4e0b-97e2-d670478177c9" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00017_frag_00001" data-state="slide_00017_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+
+<div class="jb-output-code jb-render">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-output jb-render">
+
+<h1>Gradient Information</h1>
+
+<span id="id-3d2df157-1600-4390-92ad-9291b0a2e127" ><span id="id-3d2df157-1600-4390-92ad-9291b0a2e127"><img id="img-id-3d2df157-1600-4390-92ad-9291b0a2e127"     src="assets/images/m2.svg"/></span>
+</span>
+</div><!-- end of jb-output jb-render -->
+</div><!-- end of jb-output-code jb-render -->
+
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-ad3c1063-04d9-49ac-8f96-ef217585a40d" ><span id="id-ad3c1063-04d9-49ac-8f96-ef217585a40d"><img id="img-id-ad3c1063-04d9-49ac-8f96-ef217585a40d"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-8b729bd9-88e0-4398-97da-ac383370b78e" ><span id="id-8b729bd9-88e0-4398-97da-ac383370b78e"><img id="img-id-8b729bd9-88e0-4398-97da-ac383370b78e" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00018_frag_00001" data-state="slide_00018_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+<div class="jb-input jb-render jb-code" style="text-align:center">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-input-code jb-render">
+<div class="highlight" style="background: #f8f8f8; color:#101010;display=inline-block;"><pre style="line-height: 125%"><span></span><span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">normalizeAngleUnsigned</span>( ang ):
+  <span style="color: #008000; font-weight: bold">while</span> ( ang <span style="color: #666666">&gt;=</span> <span style="color: #666666">180.0/180.0</span> <span style="color: #666666">*</span> math<span style="color: #666666">.</span>pi ):
+    ang <span style="color: #666666">=</span> ang <span style="color: #666666">-</span> <span style="color: #666666">180.0/180.0</span> <span style="color: #666666">*</span> math<span style="color: #666666">.</span>pi
+  <span style="color: #008000; font-weight: bold">while</span> ( ang <span style="color: #666666">&lt;</span> <span style="color: #666666">0.0/180.0</span> <span style="color: #666666">*</span> math<span style="color: #666666">.</span>pi ):
+    ang <span style="color: #666666">=</span> ang <span style="color: #666666">+</span> <span style="color: #666666">180.0/180.0</span> <span style="color: #666666">*</span> math<span style="color: #666666">.</span>pi
+  <span style="color: #008000; font-weight: bold">return</span> ang 
+</pre></div>
+
+</div><!-- end of jb-input-code jb-render -->
+
+</div>
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-8f0c6e8e-6d41-4b45-bfe4-eef50e572976" ><span id="id-8f0c6e8e-6d41-4b45-bfe4-eef50e572976"><img id="img-id-8f0c6e8e-6d41-4b45-bfe4-eef50e572976"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-c9b9cf78-0e76-45c0-9aa5-37b56bee2f1f" ><span id="id-c9b9cf78-0e76-45c0-9aa5-37b56bee2f1f"><img id="img-id-c9b9cf78-0e76-45c0-9aa5-37b56bee2f1f" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00019_frag_00001" data-state="slide_00019_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+
+<div class="jb-output-code jb-render">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-output jb-render">
+
+<h1>Histogram of Oriented Gradients</h1>
+
+<div class="jb-text">
+<p>Calculate a histogram of the gradients (group into buckets based on orientation)</p>
+<p>In this case, each bucket is 20 deg. wide, 9 buckets in total.</p>
+<p>Sharp change in the edges of a bucket</p>
+<p>Add a gradient to previous and next bucket center weighted by the distance to the center</p>
+</div>
+</div><!-- end of jb-output jb-render -->
+</div><!-- end of jb-output-code jb-render -->
+
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-87a57f45-9402-4909-a40a-65ad3d7af7b3" ><span id="id-87a57f45-9402-4909-a40a-65ad3d7af7b3"><img id="img-id-87a57f45-9402-4909-a40a-65ad3d7af7b3"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-a4582593-5489-40b6-899f-0bcf44a53b9a" ><span id="id-a4582593-5489-40b6-899f-0bcf44a53b9a"><img id="img-id-a4582593-5489-40b6-899f-0bcf44a53b9a" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00020_frag_00001" data-state="slide_00020_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+<div class="jb-input jb-render jb-code" style="text-align:center">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-input-code jb-render">
+<div class="highlight" style="background: #f8f8f8; color:#101010;display=inline-block;"><pre style="line-height: 125%"><span></span><span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">calcHOG</span>( angle, mag, step, da <span style="color: #666666">=</span> <span style="color: #666666">20.0/180.0</span> <span style="color: #666666">*</span> math<span style="color: #666666">.</span>pi ):
+
+    nBuckets <span style="color: #666666">=</span> <span style="color: #008000">int</span>( math<span style="color: #666666">.</span>pi <span style="color: #666666">/</span> da )
+    
+    height, width <span style="color: #666666">=</span> angle<span style="color: #666666">.</span>shape
+    hOGradients <span style="color: #666666">=</span> np<span style="color: #666666">.</span>zeros( ( <span style="color: #008000">int</span>( math<span style="color: #666666">.</span>ceil( height <span style="color: #666666">/</span> step ) ), <span style="color: #008000">int</span>( math<span style="color: #666666">.</span>ceil( width <span style="color: #666666">/</span> step ) ), <span style="color: #666666">9</span> ) )
+
+    cnt <span style="color: #666666">=</span> <span style="color: #666666">0</span> 
+
+    <span style="color: #008000; font-weight: bold">for</span> yb <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>(<span style="color: #666666">0</span>, height, step ):
+        <span style="color: #008000; font-weight: bold">for</span> xb <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>( <span style="color: #666666">0</span>, width, step ):
+            hog <span style="color: #666666">=</span> np<span style="color: #666666">.</span>zeros( nBuckets )
+            <span style="color: #408080; font-style: italic">#print(&#39;Number of buckets&#39;, hog.shape )</span>
+            <span style="color: #008000; font-weight: bold">for</span> y <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>( yb, <span style="color: #008000">min</span>( yb <span style="color: #666666">+</span> step, height ) ):
+                <span style="color: #008000; font-weight: bold">for</span> x <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>( xb, <span style="color: #008000">min</span>( xb <span style="color: #666666">+</span> step, width ) ):
+                    aa <span style="color: #666666">=</span> angle[ y, x ]
+                    m <span style="color: #666666">=</span> mag[y, x]
+
+                    a <span style="color: #666666">=</span> normalizeAngleUnsigned( aa )
+
+                    ba, br <span style="color: #666666">=</span> <span style="color: #008000">divmod</span>( a, da )
+                    
+                    ba <span style="color: #666666">=</span> <span style="color: #008000">int</span>( ba )
+                    brp <span style="color: #666666">=</span> <span style="color: #666666">1.0</span> <span style="color: #666666">-</span> br <span style="color: #666666">/</span> da
+
+    <span style="color: #408080; font-style: italic">#                if ( xb == 3 * step ) and ( yb == 2 * step ):</span>
+    <span style="color: #408080; font-style: italic">#                    print(&#39;angle {3:5.2f}-&gt;{0:5.2f} mag={4:5.2f} added to left bucket {1} rem {2:5.2f}/percentage {5:5.2f}&#39;.format( a / math.pi * 180.0, ba, br, aa / math.pi * 180.0, m, brp ) )</span>
+    <span style="color: #408080; font-style: italic">#                cnt = cnt + 1                      </span>
+                    minInd <span style="color: #666666">=</span> ba
+                    maxInd <span style="color: #666666">=</span> ( ba <span style="color: #666666">+</span> <span style="color: #666666">1</span> ) <span style="color: #666666">%</span> nBuckets
+                    hog[minInd] <span style="color: #666666">=</span> hog[ minInd ] <span style="color: #666666">+</span> brp <span style="color: #666666">*</span> m
+                    hog[maxInd] <span style="color: #666666">=</span> hog[ maxInd ] <span style="color: #666666">+</span> (<span style="color: #666666">1.0</span> <span style="color: #666666">-</span> brp ) <span style="color: #666666">*</span> m
+            hOGradients[ yb <span style="color: #666666">//</span> step, xb <span style="color: #666666">//</span> step, : ] <span style="color: #666666">=</span> hog
+    <span style="color: #008000; font-weight: bold">return</span> hOGradients
+
+hog <span style="color: #666666">=</span> calcHOG( angle, mag, step, <span style="color: #666666">20.0/180.0</span> <span style="color: #666666">*</span> math<span style="color: #666666">.</span>pi )
+<span style="color: #408080; font-style: italic">#print( hog[1,3] )</span>
+<span style="color: #408080; font-style: italic">#print( hog[3,3] )</span>
+<span style="color: #408080; font-style: italic">#print( hog[0,0] )</span>
+</pre></div>
+
+</div><!-- end of jb-input-code jb-render -->
+
+</div>
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-e5a69dfd-6de9-4d40-b9d7-65986a7241bf" ><span id="id-e5a69dfd-6de9-4d40-b9d7-65986a7241bf"><img id="img-id-e5a69dfd-6de9-4d40-b9d7-65986a7241bf"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-ff9a5f57-b39d-466e-997d-efdc18302a00" ><span id="id-ff9a5f57-b39d-466e-997d-efdc18302a00"><img id="img-id-ff9a5f57-b39d-466e-997d-efdc18302a00" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00021_frag_00001" data-state="slide_00021_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+<div class="jb-input jb-render jb-code" style="text-align:center">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-input-code jb-render">
+<div class="highlight" style="background: #f8f8f8; color:#101010;display=inline-block;"><pre style="line-height: 125%"><span></span><span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">plotHOG</span>( ax, hog ):
+    x <span style="color: #666666">=</span> np<span style="color: #666666">.</span>linspace( <span style="color: #666666">0.0</span>, <span style="color: #666666">179.0</span>, <span style="color: #008000">len</span>(hog) )
+    <span style="color: #408080; font-style: italic">#norm = np.linalg.norm( hog, ord=2 )</span>
+    norm <span style="color: #666666">=</span> <span style="color: #666666">1.0</span>
+    ax<span style="color: #666666">.</span>bar( x, hog <span style="color: #666666">/</span> norm, color<span style="color: #666666">=</span><span style="color: #BA2121">&#39;blue&#39;</span>, width<span style="color: #666666">=180.0</span> <span style="color: #666666">//</span> <span style="color: #008000">len</span>(hog) )
+
+
+fig <span style="color: #666666">=</span> plt<span style="color: #666666">.</span>figure( figsize<span style="color: #666666">=</span>(<span style="color: #666666">10</span>,<span style="color: #666666">10</span>) )
+FRows <span style="color: #666666">=</span> <span style="color: #666666">1</span>
+FCols <span style="color: #666666">=</span> <span style="color: #666666">3</span>
+
+axs <span style="color: #666666">=</span> []
+<span style="color: #008000; font-weight: bold">for</span> i <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>( FRows <span style="color: #666666">*</span> FCols ):
+    ax <span style="color: #666666">=</span> fig<span style="color: #666666">.</span>add_subplot( FRows, FCols, i<span style="color: #666666">+1</span> )
+    ax<span style="color: #666666">.</span>set_ylim( (<span style="color: #666666">0</span>,<span style="color: #666666">20.0</span>) )
+    axs<span style="color: #666666">.</span>append(ax)
+    
+<span style="color: #008000; font-weight: bold">for</span> i,b <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">enumerate</span>( [ [<span style="color: #666666">0</span>, <span style="color: #666666">0</span>], [<span style="color: #666666">1</span>,<span style="color: #666666">3</span>], [<span style="color: #666666">3</span>,<span style="color: #666666">3</span>] ] ):
+    by, bx <span style="color: #666666">=</span> b
+    plotHOG( axs[i], hog[ by, bx ] )
+    
+ph <span style="color: #666666">=</span> addJBFigure(<span style="color: #BA2121">&quot;ph&quot;</span>, <span style="color: #666666">0</span>, <span style="color: #666666">0</span>, fig )
+plt<span style="color: #666666">.</span>close()
+</pre></div>
+
+</div><!-- end of jb-input-code jb-render -->
+
+</div>
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-9ea07016-b926-4d3b-8fa9-e679ef661106" ><span id="id-9ea07016-b926-4d3b-8fa9-e679ef661106"><img id="img-id-9ea07016-b926-4d3b-8fa9-e679ef661106"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-478407cd-9969-4ea1-9e9b-e77178e85485" ><span id="id-478407cd-9969-4ea1-9e9b-e77178e85485"><img id="img-id-478407cd-9969-4ea1-9e9b-e77178e85485" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00022_frag_00001" data-state="slide_00022_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+
+<div class="jb-output-code jb-render">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-output jb-render">
+
+<h1>Sample HOG for three areas of the image</h1>
+
+<span id="id-beb82056-6a26-4a22-9ea8-24e51e62868b" ><span id="id-beb82056-6a26-4a22-9ea8-24e51e62868b"><img id="img-id-beb82056-6a26-4a22-9ea8-24e51e62868b"     src="assets/images/ph.svg"/></span>
+</span>
+</div><!-- end of jb-output jb-render -->
+</div><!-- end of jb-output-code jb-render -->
+
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-c5b5661b-94a6-4751-92fb-9b0c604e89f1" ><span id="id-c5b5661b-94a6-4751-92fb-9b0c604e89f1"><img id="img-id-c5b5661b-94a6-4751-92fb-9b0c604e89f1"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-844af425-5cc0-42ff-846c-44966ad8ab3c" ><span id="id-844af425-5cc0-42ff-846c-44966ad8ab3c"><img id="img-id-844af425-5cc0-42ff-846c-44966ad8ab3c" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00023_frag_00001" data-state="slide_00023_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+<div class="jb-input jb-render jb-code" style="text-align:center">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-input-code jb-render">
+<div style="font-size:0.5em"><!-- start of style="font-size:0.5em" -->
+<div class="highlight" style="background: #f8f8f8; color:#101010;display=inline-block;"><pre style="line-height: 125%"><span></span><span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">normalizeHOG</span>( hog, xStep, yStep ):
+    height, width, nFeatures <span style="color: #666666">=</span> hog<span style="color: #666666">.</span>shape
+    hog2 <span style="color: #666666">=</span> np<span style="color: #666666">.</span>zeros( (height, width, nFeatures ) )
+    <span style="color: #008000; font-weight: bold">for</span> y <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>( height ):
+        <span style="color: #008000; font-weight: bold">for</span> x <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>( width ):
+            hogVector <span style="color: #666666">=</span> np<span style="color: #666666">.</span>zeros( ( xStep <span style="color: #666666">*</span> yStep <span style="color: #666666">*</span> nFeatures ) )
+            <span style="color: #008000; font-weight: bold">for</span> yi <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>(y, <span style="color: #008000">min</span>( y <span style="color: #666666">+</span> yStep, height ) ):
+                <span style="color: #008000; font-weight: bold">for</span> xi <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>( x, <span style="color: #008000">min</span>( x <span style="color: #666666">+</span> xStep, width ) ):
+                    hi <span style="color: #666666">=</span> ( ( yi <span style="color: #666666">-</span> y ) <span style="color: #666666">*</span> xStep <span style="color: #666666">+</span> xi <span style="color: #666666">-</span> x ) <span style="color: #666666">*</span> nFeatures
+                    <span style="color: #408080; font-style: italic">#print(xi, yi, hi)</span>
+                    hogVector[ hi: hi <span style="color: #666666">+</span> nFeatures ] <span style="color: #666666">=</span> hog[yi, xi]
+            <span style="color: #408080; font-style: italic">#print(&#39;hogVector&#39;, hogVector )</span>
+            norm <span style="color: #666666">=</span> np<span style="color: #666666">.</span>linalg<span style="color: #666666">.</span>norm( hogVector, <span style="color: #008000">ord</span><span style="color: #666666">=2</span> )
+            hog2[y,x,:] <span style="color: #666666">=</span> hogVector[<span style="color: #666666">0</span>:nFeatures] <span style="color: #666666">/</span> norm
+    <span style="color: #008000; font-weight: bold">return</span> hog2
+  
+hog2 <span style="color: #666666">=</span> normalizeHOG( hog, <span style="color: #666666">2</span>, <span style="color: #666666">2</span> ) 
+
+fig <span style="color: #666666">=</span> plt<span style="color: #666666">.</span>figure( figsize<span style="color: #666666">=</span>(<span style="color: #666666">12</span>,<span style="color: #666666">12</span>) )
+FRows <span style="color: #666666">=</span> <span style="color: #666666">1</span>
+FCols <span style="color: #666666">=</span> <span style="color: #666666">3</span>
+
+axs <span style="color: #666666">=</span> []
+<span style="color: #008000; font-weight: bold">for</span> i <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>( FRows <span style="color: #666666">*</span> FCols ):
+    ax <span style="color: #666666">=</span> fig<span style="color: #666666">.</span>add_subplot( FRows, FCols, i<span style="color: #666666">+1</span> )
+    ax<span style="color: #666666">.</span>set_ylim( (<span style="color: #666666">0</span>,<span style="color: #666666">1.0</span>) )
+    axs<span style="color: #666666">.</span>append(ax)
+    
+<span style="color: #008000; font-weight: bold">for</span> i,b <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">enumerate</span>( [ [<span style="color: #666666">0</span>, <span style="color: #666666">0</span>], [<span style="color: #666666">1</span>,<span style="color: #666666">3</span>], [<span style="color: #666666">3</span>,<span style="color: #666666">3</span>] ] ):
+    by, bx <span style="color: #666666">=</span> b
+    <span style="color: #408080; font-style: italic">#print(&#39;hog&#39;, by, bx, hog2[by,bx] )</span>
+    plotHOG( axs[i], hog2[ by, bx ] )
+
+ph2 <span style="color: #666666">=</span> addJBFigure(<span style="color: #BA2121">&quot;ph2&quot;</span>, <span style="color: #666666">0</span>, <span style="color: #666666">0</span>, fig )
+plt<span style="color: #666666">.</span>close()
+</pre></div>
+
+</div><!-- end of style="font-size:0.5em" -->
+</div><!-- end of jb-input-code jb-render -->
+
+</div>
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-27c1cd17-0679-4b78-b4c0-0c13ea27fbf7" ><span id="id-27c1cd17-0679-4b78-b4c0-0c13ea27fbf7"><img id="img-id-27c1cd17-0679-4b78-b4c0-0c13ea27fbf7"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-b453da24-b186-46e0-a5fe-45a013c620b0" ><span id="id-b453da24-b186-46e0-a5fe-45a013c620b0"><img id="img-id-b453da24-b186-46e0-a5fe-45a013c620b0" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00024_frag_00001" data-state="slide_00024_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+
+<div class="jb-output-code jb-render">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-output jb-render">
+
+<span id="id-c9e3856a-5c0c-4a44-a0b5-50182896a8c5" ><span id="id-c9e3856a-5c0c-4a44-a0b5-50182896a8c5"><img id="img-id-c9e3856a-5c0c-4a44-a0b5-50182896a8c5"     src="assets/images/ph2.svg"/></span>
+</span>
+</div><!-- end of jb-output jb-render -->
+</div><!-- end of jb-output-code jb-render -->
+
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-93df6d7c-f439-467b-9842-a2b47413cb60" ><span id="id-93df6d7c-f439-467b-9842-a2b47413cb60"><img id="img-id-93df6d7c-f439-467b-9842-a2b47413cb60"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-17a2c535-348b-43a4-8f73-9bc911d7f197" ><span id="id-17a2c535-348b-43a4-8f73-9bc911d7f197"><img id="img-id-17a2c535-348b-43a4-8f73-9bc911d7f197" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00025_frag_00001" data-state="slide_00025_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+<div class="jb-input jb-render jb-code" style="text-align:center">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-input-code jb-render">
+<div class="highlight" style="background: #f8f8f8; color:#101010;display=inline-block;"><pre style="line-height: 125%"><span></span><span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">createHOGRay</span>( hog, scale ):
+    nHog <span style="color: #666666">=</span> <span style="color: #008000">len</span>(hog)
+    pts <span style="color: #666666">=</span> np<span style="color: #666666">.</span>zeros( ( <span style="color: #666666">2</span>, nHog <span style="color: #666666">+</span> <span style="color: #666666">2</span> ) )
+    da <span style="color: #666666">=</span> math<span style="color: #666666">.</span>pi <span style="color: #666666">/</span> nHog
+    pts[:,<span style="color: #666666">0</span>] <span style="color: #666666">=</span> [<span style="color: #666666">-1.0*</span>scale<span style="color: #666666">/10</span>,<span style="color: #666666">0</span>]
+
+    <span style="color: #008000; font-weight: bold">for</span> i <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>(nHog):
+        angle <span style="color: #666666">=</span> ( i <span style="color: #666666">+</span> <span style="color: #666666">0.5</span> ) <span style="color: #666666">*</span> da
+        xpos <span style="color: #666666">=</span> math<span style="color: #666666">.</span>cos( angle ) <span style="color: #666666">*</span> scale <span style="color: #666666">*</span> hog[i]
+        ypos <span style="color: #666666">=</span> <span style="color: #666666">-</span> math<span style="color: #666666">.</span>sin( angle ) <span style="color: #666666">*</span> scale <span style="color: #666666">*</span> hog[i]
+        pts[:,i<span style="color: #666666">+1</span>] <span style="color: #666666">=</span> [ xpos, ypos ]
+    pts[:,<span style="color: #666666">-1</span>] <span style="color: #666666">=</span> [<span style="color: #666666">1.0*</span>scale<span style="color: #666666">/10</span>,<span style="color: #666666">0</span>]
+    
+    <span style="color: #008000; font-weight: bold">return</span> pts    
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">showHOGVisual</span>( ax, hog, step ):
+    height, width, _ <span style="color: #666666">=</span> hog<span style="color: #666666">.</span>shape
+    <span style="color: #008000; font-weight: bold">for</span> y <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>( height ):
+        <span style="color: #008000; font-weight: bold">for</span> x <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>( width ):
+            pts <span style="color: #666666">=</span> createHOGRay( hog[y,x], <span style="color: #666666">20.0</span> )
+            p2 <span style="color: #666666">=</span> np<span style="color: #666666">.</span>vstack( ( pts[<span style="color: #666666">0</span>,:] <span style="color: #666666">+</span> ( x <span style="color: #666666">+</span> <span style="color: #666666">0.5</span> ) <span style="color: #666666">*</span> step, pts[<span style="color: #666666">1</span>,:] <span style="color: #666666">+</span> (y <span style="color: #666666">+</span> <span style="color: #666666">0.5</span>) <span style="color: #666666">*</span> step ) )
+            
+            ax<span style="color: #666666">.</span>plot( p2[<span style="color: #666666">0</span>,:], p2[<span style="color: #666666">1</span>,:], <span style="color: #BA2121">&#39;g-&#39;</span> )
+</pre></div>
+
+</div><!-- end of jb-input-code jb-render -->
+
+</div>
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-22fd9cc6-8372-49a2-879e-47b3b89c8143" ><span id="id-22fd9cc6-8372-49a2-879e-47b3b89c8143"><img id="img-id-22fd9cc6-8372-49a2-879e-47b3b89c8143"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-3c04a7b4-8d8e-437a-9edb-853dee82aafc" ><span id="id-3c04a7b4-8d8e-437a-9edb-853dee82aafc"><img id="img-id-3c04a7b4-8d8e-437a-9edb-853dee82aafc" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00026_frag_00001" data-state="slide_00026_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+<div class="jb-input jb-render jb-code" style="text-align:center">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-input-code jb-render">
+<div class="highlight" style="background: #f8f8f8; color:#101010;display=inline-block;"><pre style="line-height: 125%"><span></span><span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">showHOG</span>( ax, hog, thres, step ):
+    height, width, _ <span style="color: #666666">=</span> hog<span style="color: #666666">.</span>shape
+    <span style="color: #008000; font-weight: bold">for</span> y <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>( height ):
+        <span style="color: #008000; font-weight: bold">for</span> x <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>( width ):
+            <span style="color: #008000; font-weight: bold">if</span> ( <span style="color: #008000">max</span>( hog[y,x] ) <span style="color: #666666">&gt;</span> thres ):
+                rect <span style="color: #666666">=</span> np<span style="color: #666666">.</span>zeros( (<span style="color: #666666">2</span>,<span style="color: #666666">5</span>) )
+                rect[:,<span style="color: #666666">0</span>] <span style="color: #666666">=</span> [x<span style="color: #666666">*</span>step, y<span style="color: #666666">*</span>step]
+                rect[:,<span style="color: #666666">1</span>] <span style="color: #666666">=</span> [x<span style="color: #666666">*</span>step <span style="color: #666666">+</span> step, y<span style="color: #666666">*</span>step]
+                rect[:,<span style="color: #666666">2</span>] <span style="color: #666666">=</span> [x<span style="color: #666666">*</span>step <span style="color: #666666">+</span> step, y<span style="color: #666666">*</span>step <span style="color: #666666">+</span>step]
+                rect[:,<span style="color: #666666">3</span>] <span style="color: #666666">=</span> [x<span style="color: #666666">*</span>step, y<span style="color: #666666">*</span>step <span style="color: #666666">+</span> step ]
+                rect[:,<span style="color: #666666">4</span>] <span style="color: #666666">=</span> [x<span style="color: #666666">*</span>step, y<span style="color: #666666">*</span>step]
+                
+                ax<span style="color: #666666">.</span>plot( rect[<span style="color: #666666">0</span>,:], rect[<span style="color: #666666">1</span>,:], <span style="color: #BA2121">&#39;r-&#39;</span>, linewidth<span style="color: #666666">=3.0</span> )
+</pre></div>
+
+</div><!-- end of jb-input-code jb-render -->
+
+</div>
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-0c88fdc9-f773-4c75-8577-518039dad35d" ><span id="id-0c88fdc9-f773-4c75-8577-518039dad35d"><img id="img-id-0c88fdc9-f773-4c75-8577-518039dad35d"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-8448566b-1462-4bfe-a4ea-c982c7a263a7" ><span id="id-8448566b-1462-4bfe-a4ea-c982c7a263a7"><img id="img-id-8448566b-1462-4bfe-a4ea-c982c7a263a7" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00027_frag_00001" data-state="slide_00027_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+<div class="jb-input jb-render jb-code" style="text-align:center">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-input-code jb-render">
+<div class="highlight" style="background: #f8f8f8; color:#101010;display=inline-block;"><pre style="line-height: 125%"><span></span>target2 <span style="color: #666666">=</span> grayImg[ <span style="color: #666666">100</span>:<span style="color: #666666">250</span>, <span style="color: #666666">150</span>:<span style="color: #666666">300</span> ]
+ax<span style="color: #666666">.</span>imshow( grayImg, cmap<span style="color: #666666">=</span><span style="color: #BA2121">&#39;gray&#39;</span> )
+
+mag, angle <span style="color: #666666">=</span> showGradient( target2, <span style="color: #666666">10</span>, <span style="color: #666666">20</span>, ax )
+hog <span style="color: #666666">=</span> calcHOG( angle, mag, step, <span style="color: #666666">20.0/180.0</span> <span style="color: #666666">*</span> math<span style="color: #666666">.</span>pi )
+hog2 <span style="color: #666666">=</span> normalizeHOG( hog, <span style="color: #666666">2</span>, <span style="color: #666666">2</span> )
+
+fig <span style="color: #666666">=</span> plt<span style="color: #666666">.</span>figure( figsize<span style="color: #666666">=</span>(<span style="color: #666666">15</span>, <span style="color: #666666">15</span>) )
+ax <span style="color: #666666">=</span> fig<span style="color: #666666">.</span>add_subplot(<span style="color: #666666">1</span>,<span style="color: #666666">1</span>,<span style="color: #666666">1</span>)
+
+height, width <span style="color: #666666">=</span> target2<span style="color: #666666">.</span>shape
+
+step <span style="color: #666666">=</span> <span style="color: #666666">16</span> 
+
+x <span style="color: #666666">=</span> [ i <span style="color: #008000; font-weight: bold">for</span> i <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>(<span style="color: #666666">0</span>, width, step ) ]
+y <span style="color: #666666">=</span> [ i <span style="color: #008000; font-weight: bold">for</span> i <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>(<span style="color: #666666">0</span>, height, step ) ]
+
+x,y <span style="color: #666666">=</span> np<span style="color: #666666">.</span>meshgrid( x, y )
+
+ax<span style="color: #666666">.</span>imshow( target2, cmap<span style="color: #666666">=</span><span style="color: #BA2121">&#39;gray&#39;</span> )
+ax<span style="color: #666666">.</span>plot( x, y, <span style="color: #BA2121">&#39;b-&#39;</span> )
+ax<span style="color: #666666">.</span>plot( y, x, <span style="color: #BA2121">&#39;b-&#39;</span> )
+
+showHOG( ax, hog2, <span style="color: #666666">0.4</span>, step )
+showHOGVisual( ax, hog2, step )
+
+visHOG2 <span style="color: #666666">=</span> addJBFigure(<span style="color: #BA2121">&quot;visHOG2&quot;</span>, <span style="color: #666666">0</span>, <span style="color: #666666">0</span>, fig )
+plt<span style="color: #666666">.</span>close()
+</pre></div>
+
+</div><!-- end of jb-input-code jb-render -->
+
+</div>
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-2263151b-6931-4070-8148-dbb4dfc41a54" ><span id="id-2263151b-6931-4070-8148-dbb4dfc41a54"><img id="img-id-2263151b-6931-4070-8148-dbb4dfc41a54"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-cf5ee81a-fd17-40c4-b930-623d92ecf6ab" ><span id="id-cf5ee81a-fd17-40c4-b930-623d92ecf6ab"><img id="img-id-cf5ee81a-fd17-40c4-b930-623d92ecf6ab" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00028_frag_00001" data-state="slide_00028_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+
+<div class="jb-output-code jb-render">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-output jb-render">
+
+<h1>Output of HOG</h1>
+
+<span id="id-a45c3ba7-5da6-4056-be41-10745a67fde6" ><span id="id-a45c3ba7-5da6-4056-be41-10745a67fde6"><img id="img-id-a45c3ba7-5da6-4056-be41-10745a67fde6"     src="assets/images/visHOG2.svg"/></span>
+</span>
+</div><!-- end of jb-output jb-render -->
+</div><!-- end of jb-output-code jb-render -->
+
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-f64d2211-592d-4ec0-beee-db3f6540a64f" ><span id="id-f64d2211-592d-4ec0-beee-db3f6540a64f"><img id="img-id-f64d2211-592d-4ec0-beee-db3f6540a64f"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-6b7feec3-dc41-4c40-91a9-6ebc33dfe3d7" ><span id="id-6b7feec3-dc41-4c40-91a9-6ebc33dfe3d7"><img id="img-id-6b7feec3-dc41-4c40-91a9-6ebc33dfe3d7" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00029_frag_00001" data-state="slide_00029_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+<div class="jb-input jb-render jb-code" style="text-align:center">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-input-code jb-render">
+<div class="highlight" style="background: #f8f8f8; color:#101010;display=inline-block;"><pre style="line-height: 125%"><span></span>target2 <span style="color: #666666">=</span> grayImg[ <span style="color: #666666">100</span>:<span style="color: #666666">250</span>, <span style="color: #666666">150</span>:<span style="color: #666666">300</span> ]
+ax<span style="color: #666666">.</span>imshow( grayImg, cmap<span style="color: #666666">=</span><span style="color: #BA2121">&#39;gray&#39;</span> )
+
+mag, angle <span style="color: #666666">=</span> showGradient( grayImg, <span style="color: #666666">10</span>, <span style="color: #666666">20</span>, ax )
+hog <span style="color: #666666">=</span> calcHOG( angle, mag, step, <span style="color: #666666">20.0/180.0</span> <span style="color: #666666">*</span> math<span style="color: #666666">.</span>pi )
+hog2 <span style="color: #666666">=</span> normalizeHOG( hog, <span style="color: #666666">2</span>, <span style="color: #666666">2</span> )
+
+fig <span style="color: #666666">=</span> plt<span style="color: #666666">.</span>figure( figsize<span style="color: #666666">=</span>(<span style="color: #666666">15</span>, <span style="color: #666666">15</span>) )
+ax <span style="color: #666666">=</span> fig<span style="color: #666666">.</span>add_subplot(<span style="color: #666666">1</span>,<span style="color: #666666">1</span>,<span style="color: #666666">1</span>)
+
+height, width <span style="color: #666666">=</span> grayImg<span style="color: #666666">.</span>shape
+
+step <span style="color: #666666">=</span> <span style="color: #666666">16</span> 
+
+x <span style="color: #666666">=</span> [ i <span style="color: #008000; font-weight: bold">for</span> i <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>(<span style="color: #666666">0</span>, width, step ) ]
+y <span style="color: #666666">=</span> [ i <span style="color: #008000; font-weight: bold">for</span> i <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>(<span style="color: #666666">0</span>, height, step ) ]
+
+<span style="color: #408080; font-style: italic">#x,y = np.meshgrid( x, y )</span>
+
+ax<span style="color: #666666">.</span>imshow( grayImg, cmap<span style="color: #666666">=</span><span style="color: #BA2121">&#39;gray&#39;</span> )
+<span style="color: #408080; font-style: italic">#ax.plot( x, y, &#39;b-&#39; )</span>
+<span style="color: #408080; font-style: italic">#ax.plot( y, x, &#39;b-&#39; )</span>
+
+showHOG( ax, hog2, <span style="color: #666666">0.4</span>, step )
+showHOGVisual( ax, hog2, step )
+
+visHOG3 <span style="color: #666666">=</span> addJBFigure(<span style="color: #BA2121">&quot;visHOG3&quot;</span>, <span style="color: #666666">0</span>, <span style="color: #666666">0</span>, fig )
+plt<span style="color: #666666">.</span>close()
+</pre></div>
+
+</div><!-- end of jb-input-code jb-render -->
+
+</div>
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-f79614a5-8fc7-4928-a603-b793d504f220" ><span id="id-f79614a5-8fc7-4928-a603-b793d504f220"><img id="img-id-f79614a5-8fc7-4928-a603-b793d504f220"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-eb55c758-e120-47c8-b104-a6b5a218e954" ><span id="id-eb55c758-e120-47c8-b104-a6b5a218e954"><img id="img-id-eb55c758-e120-47c8-b104-a6b5a218e954" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00030_frag_00001" data-state="slide_00030_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+
+<div class="jb-output-code jb-render">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-output jb-render">
+
+<h1>Output of HOG</h1>
+
+<span id="id-7a829b68-5a37-4e8c-9385-44a88881a884" ><span id="id-7a829b68-5a37-4e8c-9385-44a88881a884"><img id="img-id-7a829b68-5a37-4e8c-9385-44a88881a884"     src="assets/images/visHOG3.svg"/></span>
+</span>
+</div><!-- end of jb-output jb-render -->
+</div><!-- end of jb-output-code jb-render -->
+
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-892b9526-6126-4a22-8fa7-d8452d9a9c52" ><span id="id-892b9526-6126-4a22-8fa7-d8452d9a9c52"><img id="img-id-892b9526-6126-4a22-8fa7-d8452d9a9c52"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-9abcb73b-cdb6-4dc4-a970-a018c532278e" ><span id="id-9abcb73b-cdb6-4dc4-a970-a018c532278e"><img id="img-id-9abcb73b-cdb6-4dc4-a970-a018c532278e" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00031_frag_00001" data-state="slide_00031_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+
+<div class="jb-output-code jb-render">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-output jb-render">
+<div class="document" id="classification">
+<h1 class="title">Classification</h1>
+<div class="jb-text docutils container">
+<p>Hard to use the output of normalized gradients to build higher level features</p>
+<p>Modern approach uses machine learning (ML)  to use lower level features as features for a ML algorithm to detect objects</p>
+<p>In this example, we group 7 by 7 blocks.</p>
+<p>Each block is represented by an array with 9 entries</p>
+</div>
+</div>
+
+</div><!-- end of jb-output jb-render -->
+</div><!-- end of jb-output-code jb-render -->
+
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-1c26ffdd-863a-4c53-a427-eecaa6add5ef" ><span id="id-1c26ffdd-863a-4c53-a427-eecaa6add5ef"><img id="img-id-1c26ffdd-863a-4c53-a427-eecaa6add5ef"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-3b67b858-0d5f-4c40-a44a-dcd1eef8a0de" ><span id="id-3b67b858-0d5f-4c40-a44a-dcd1eef8a0de"><img id="img-id-3b67b858-0d5f-4c40-a44a-dcd1eef8a0de" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00032_frag_00001" data-state="slide_00032_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+<div class="jb-input jb-render jb-code" style="text-align:center">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-input-code jb-render">
+<div class="highlight" style="background: #f8f8f8; color:#101010;display=inline-block;"><pre style="line-height: 125%"><span></span><span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">groupToCoordinates</span>( bx, by, step ):
+    <span style="color: #008000; font-weight: bold">return</span> [ bx <span style="color: #666666">*</span> step, by <span style="color: #666666">*</span> step ]
+</pre></div>
+
+</div><!-- end of jb-input-code jb-render -->
+
+</div>
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-1df67ade-98c3-45c1-b60c-880ec5b88675" ><span id="id-1df67ade-98c3-45c1-b60c-880ec5b88675"><img id="img-id-1df67ade-98c3-45c1-b60c-880ec5b88675"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-08e48d39-98ec-4fbd-a902-81c7518def99" ><span id="id-08e48d39-98ec-4fbd-a902-81c7518def99"><img id="img-id-08e48d39-98ec-4fbd-a902-81c7518def99" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00033_frag_00001" data-state="slide_00033_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+<div class="jb-input jb-render jb-code" style="text-align:center">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-input-code jb-render">
+<div style="font-size:0.5em"><!-- start of style="font-size:0.5em" -->
+<div class="highlight" style="background: #f8f8f8; color:#101010;display=inline-block;"><pre style="line-height: 125%"><span></span><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">matplotlib.pyplot</span> <span style="color: #008000; font-weight: bold">as</span> <span style="color: #0000FF; font-weight: bold">plt</span>
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">matplotlib.patches</span> <span style="color: #008000; font-weight: bold">as</span> <span style="color: #0000FF; font-weight: bold">mpatches</span>
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">numpy</span> <span style="color: #008000; font-weight: bold">as</span> <span style="color: #0000FF; font-weight: bold">np</span>
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">math</span>
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">random</span>
+
+GroupSize <span style="color: #666666">=</span> (<span style="color: #666666">7</span>, <span style="color: #666666">7</span>)
+
+fig <span style="color: #666666">=</span> plt<span style="color: #666666">.</span>figure( figsize<span style="color: #666666">=</span>(<span style="color: #666666">15</span>, <span style="color: #666666">15</span>) )
+ax <span style="color: #666666">=</span> fig<span style="color: #666666">.</span>add_subplot(<span style="color: #666666">1</span>,<span style="color: #666666">1</span>,<span style="color: #666666">1</span>)
+
+height, width <span style="color: #666666">=</span> grayImg<span style="color: #666666">.</span>shape
+
+step <span style="color: #666666">=</span> <span style="color: #666666">16</span> 
+
+x <span style="color: #666666">=</span> [ i <span style="color: #008000; font-weight: bold">for</span> i <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>(<span style="color: #666666">0</span>, width, step ) ]
+y <span style="color: #666666">=</span> [ i <span style="color: #008000; font-weight: bold">for</span> i <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>(<span style="color: #666666">0</span>, height, step ) ]
+
+<span style="color: #408080; font-style: italic">#x,y = np.meshgrid( x, y )</span>
+
+ax<span style="color: #666666">.</span>imshow( grayImg, cmap<span style="color: #666666">=</span><span style="color: #BA2121">&#39;gray&#39;</span> )
+<span style="color: #408080; font-style: italic">#ax.plot( x, y, &#39;b-&#39; )</span>
+<span style="color: #408080; font-style: italic">#ax.plot( y, x, &#39;b-&#39; )</span>
+
+showHOG( ax, hog2, <span style="color: #666666">0.4</span>, step )
+
+targets <span style="color: #666666">=</span> [ [<span style="color: #666666">3</span>, <span style="color: #666666">9</span>], [ <span style="color: #666666">14</span>, <span style="color: #666666">9</span>], [ <span style="color: #666666">25</span>, <span style="color: #666666">9</span>], [ <span style="color: #666666">38</span>, <span style="color: #666666">9</span> ] ]
+
+<span style="color: #008000; font-weight: bold">for</span> tx, ty <span style="color: #AA22FF; font-weight: bold">in</span> targets:
+    r <span style="color: #666666">=</span> mpatches<span style="color: #666666">.</span>Rectangle( groupToCoordinates( tx <span style="color: #666666">-</span> GroupSize[<span style="color: #666666">0</span>]<span style="color: #666666">//2</span>, ty <span style="color: #666666">-</span> GroupSize[<span style="color: #666666">1</span>]<span style="color: #666666">//2</span>, step ), GroupSize[<span style="color: #666666">0</span>] <span style="color: #666666">*</span> step, GroupSize[<span style="color: #666666">1</span>] <span style="color: #666666">*</span> step, color<span style="color: #666666">=</span><span style="color: #BA2121">&#39;#3232ffa0&#39;</span> )
+    ax<span style="color: #666666">.</span>add_patch( r )
+    r <span style="color: #666666">=</span> mpatches<span style="color: #666666">.</span>Rectangle( groupToCoordinates( tx, ty, step ) , step, step, color <span style="color: #666666">=</span> <span style="color: #BA2121">&#39;#b04080a0&#39;</span>)
+    ax<span style="color: #666666">.</span>add_patch( r )
+
+figLearn <span style="color: #666666">=</span> addJBFigure(<span style="color: #BA2121">&quot;figLearn&quot;</span>, <span style="color: #666666">0</span>, <span style="color: #666666">0</span>, fig )
+plt<span style="color: #666666">.</span>close()
+</pre></div>
+
+</div><!-- end of style="font-size:0.5em" -->
+</div><!-- end of jb-input-code jb-render -->
+
+</div>
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-c80ffe0a-c9dd-4dda-b5f3-4213d63b7e62" ><span id="id-c80ffe0a-c9dd-4dda-b5f3-4213d63b7e62"><img id="img-id-c80ffe0a-c9dd-4dda-b5f3-4213d63b7e62"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-8959a733-eaf0-4ad3-9348-34b8d87e2b26" ><span id="id-8959a733-eaf0-4ad3-9348-34b8d87e2b26"><img id="img-id-8959a733-eaf0-4ad3-9348-34b8d87e2b26" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00034_frag_00001" data-state="slide_00034_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+
+<div class="jb-output-code jb-render">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-output jb-render">
+
+<h1>Output of HOG</h1>
+
+<span id="id-ce8b380d-9e2b-4aba-8e63-fcb2bc1fc256" ><span id="id-ce8b380d-9e2b-4aba-8e63-fcb2bc1fc256"><img id="img-id-ce8b380d-9e2b-4aba-8e63-fcb2bc1fc256"     src="assets/images/figLearn.svg"/></span>
+</span>
+</div><!-- end of jb-output jb-render -->
+</div><!-- end of jb-output-code jb-render -->
+
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-1e20cf5d-f4c8-47f0-a32b-d2e064cd0945" ><span id="id-1e20cf5d-f4c8-47f0-a32b-d2e064cd0945"><img id="img-id-1e20cf5d-f4c8-47f0-a32b-d2e064cd0945"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-555767a0-0a10-4707-9660-2594bf8cf303" ><span id="id-555767a0-0a10-4707-9660-2594bf8cf303"><img id="img-id-555767a0-0a10-4707-9660-2594bf8cf303" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00035_frag_00001" data-state="slide_00035_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+<div class="jb-input jb-render jb-code" style="text-align:center">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-input-code jb-render">
+<div style="font-size:0.5em"><!-- start of style="font-size:0.5em" -->
+<div class="highlight" style="background: #f8f8f8; color:#101010;display=inline-block;"><pre style="line-height: 125%"><span></span>fig <span style="color: #666666">=</span> plt<span style="color: #666666">.</span>figure( figsize<span style="color: #666666">=</span>(<span style="color: #666666">12</span>, <span style="color: #666666">12</span>) )
+
+xsPos <span style="color: #666666">=</span> []
+ysPos <span style="color: #666666">=</span> []
+
+<span style="color: #008000; font-weight: bold">for</span> i, trg <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">enumerate</span>(targets):
+  ax <span style="color: #666666">=</span> fig<span style="color: #666666">.</span>add_subplot(<span style="color: #666666">2</span>,<span style="color: #666666">4</span>, i<span style="color: #666666">+1</span> )
+  tx, ty <span style="color: #666666">=</span> trg
+  
+  px, py <span style="color: #666666">=</span> groupToCoordinates( tx <span style="color: #666666">-</span> GroupSize[<span style="color: #666666">0</span>]<span style="color: #666666">//2</span>, ty <span style="color: #666666">-</span> GroupSize[<span style="color: #666666">1</span>]<span style="color: #666666">//2</span>, step )
+  offx, offy <span style="color: #666666">=</span> <span style="color: #666666">0</span>, <span style="color: #666666">0</span>
+  ex, ey <span style="color: #666666">=</span> groupToCoordinates( tx <span style="color: #666666">+</span> GroupSize[<span style="color: #666666">0</span>]<span style="color: #666666">//2</span> <span style="color: #666666">+</span> <span style="color: #666666">1</span>, ty <span style="color: #666666">+</span> GroupSize[<span style="color: #666666">1</span>]<span style="color: #666666">//2</span> <span style="color: #666666">+</span> <span style="color: #666666">1</span>, step )
+  roi <span style="color: #666666">=</span> grayImg[py<span style="color: #666666">+</span>offy:ey<span style="color: #666666">+</span>offy,px<span style="color: #666666">+</span>offx:ex<span style="color: #666666">+</span>offx]
+
+  ax<span style="color: #666666">.</span>imshow( roi, cmap<span style="color: #666666">=</span><span style="color: #BA2121">&#39;gray&#39;</span> )
+  
+  mag, angle <span style="color: #666666">=</span> showGradient( roi, <span style="color: #666666">10</span>, <span style="color: #666666">20</span> )
+  hog <span style="color: #666666">=</span> calcHOG( angle, mag, step, <span style="color: #666666">20.0/180.0</span> <span style="color: #666666">*</span> math<span style="color: #666666">.</span>pi )
+  hog2 <span style="color: #666666">=</span> normalizeHOG( hog, <span style="color: #666666">2</span>, <span style="color: #666666">2</span> )
+  showHOG( ax, hog2, <span style="color: #666666">0.4</span>, step )
+  showHOGVisual( ax, hog2, step )
+  
+  x <span style="color: #666666">=</span> hog2<span style="color: #666666">.</span>flatten()
+  xsPos<span style="color: #666666">.</span>append(x)
+  ysPos<span style="color: #666666">.</span>append(<span style="color: #666666">1</span>)
+
+others <span style="color: #666666">=</span> [ [ <span style="color: #666666">10</span>, <span style="color: #666666">19</span> ], [ <span style="color: #666666">20</span>, <span style="color: #666666">19</span>], [ <span style="color: #666666">30</span>, <span style="color: #666666">3</span> ] ] <span style="color: #408080; font-style: italic">#, [ 30, 8 ] ]</span>
+    
+xsNeg <span style="color: #666666">=</span> []
+ysNeg <span style="color: #666666">=</span> []
+<span style="color: #008000; font-weight: bold">for</span> i, oth <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">enumerate</span>( others ):
+  ax <span style="color: #666666">=</span> fig<span style="color: #666666">.</span>add_subplot(<span style="color: #666666">2</span>,<span style="color: #666666">4</span>, <span style="color: #666666">5</span> <span style="color: #666666">+</span> i )
+  tx, ty <span style="color: #666666">=</span> oth
+  
+  px, py <span style="color: #666666">=</span> groupToCoordinates( tx <span style="color: #666666">-</span> GroupSize[<span style="color: #666666">0</span>]<span style="color: #666666">//2</span>, ty <span style="color: #666666">-</span> GroupSize[<span style="color: #666666">1</span>]<span style="color: #666666">//2</span>, step )
+  offx, offy <span style="color: #666666">=</span> <span style="color: #666666">0</span>, <span style="color: #666666">0</span>
+  ex, ey <span style="color: #666666">=</span> groupToCoordinates( tx <span style="color: #666666">+</span> GroupSize[<span style="color: #666666">0</span>]<span style="color: #666666">//2</span> <span style="color: #666666">+</span> <span style="color: #666666">1</span>, ty <span style="color: #666666">+</span> GroupSize[<span style="color: #666666">1</span>]<span style="color: #666666">//2</span> <span style="color: #666666">+</span> <span style="color: #666666">1</span>, step )
+  roi <span style="color: #666666">=</span> grayImg[py<span style="color: #666666">+</span>offy:ey<span style="color: #666666">+</span>offy,px<span style="color: #666666">+</span>offx:ex<span style="color: #666666">+</span>offx]
+
+  ax<span style="color: #666666">.</span>imshow( roi, cmap<span style="color: #666666">=</span><span style="color: #BA2121">&#39;gray&#39;</span> )
+  
+  mag, angle <span style="color: #666666">=</span> showGradient( roi, <span style="color: #666666">10</span>, <span style="color: #666666">20</span> )
+  hog <span style="color: #666666">=</span> calcHOG( angle, mag, step, <span style="color: #666666">20.0/180.0</span> <span style="color: #666666">*</span> math<span style="color: #666666">.</span>pi )
+  hog2 <span style="color: #666666">=</span> normalizeHOG( hog, <span style="color: #666666">2</span>, <span style="color: #666666">2</span> )
+  showHOG( ax, hog2, <span style="color: #666666">0.4</span>, step )
+  showHOGVisual( ax, hog2, step )
+  
+  x <span style="color: #666666">=</span> hog2<span style="color: #666666">.</span>flatten()
+  xsNeg<span style="color: #666666">.</span>append(x)
+  ysNeg<span style="color: #666666">.</span>append(<span style="color: #666666">-1</span>)
+
+c1Fig <span style="color: #666666">=</span> addJBFigure(<span style="color: #BA2121">&quot;c1Fig&quot;</span>, <span style="color: #666666">0</span>, <span style="color: #666666">0</span>, fig )
+plt<span style="color: #666666">.</span>close()  
+</pre></div>
+
+</div><!-- end of style="font-size:0.5em" -->
+</div><!-- end of jb-input-code jb-render -->
+
+</div>
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-06283234-9934-411b-b5c9-c6dbde5c71c3" ><span id="id-06283234-9934-411b-b5c9-c6dbde5c71c3"><img id="img-id-06283234-9934-411b-b5c9-c6dbde5c71c3"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-1c55e421-0ef1-4b63-8193-343e65ba8306" ><span id="id-1c55e421-0ef1-4b63-8193-343e65ba8306"><img id="img-id-1c55e421-0ef1-4b63-8193-343e65ba8306" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00036_frag_00001" data-state="slide_00036_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+
+<div class="jb-output-code jb-render">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-output jb-render">
+
+<h1>Traing Data</h1>
+
+<span id="id-6d13da23-ccf1-465b-b604-9fe46af1f5d5" ><span id="id-6d13da23-ccf1-465b-b604-9fe46af1f5d5"><img id="img-id-6d13da23-ccf1-465b-b604-9fe46af1f5d5"     src="assets/images/c1Fig.svg"/></span>
+</span>
+</div><!-- end of jb-output jb-render -->
+</div><!-- end of jb-output-code jb-render -->
+
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-db693186-7767-408e-913d-e96476b30b25" ><span id="id-db693186-7767-408e-913d-e96476b30b25"><img id="img-id-db693186-7767-408e-913d-e96476b30b25"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-ca78f047-8dbd-434d-9993-7b9cfc3da716" ><span id="id-ca78f047-8dbd-434d-9993-7b9cfc3da716"><img id="img-id-ca78f047-8dbd-434d-9993-7b9cfc3da716" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00037_frag_00001" data-state="slide_00037_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+<div class="jb-input jb-render jb-code" style="text-align:center">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-input-code jb-render">
+<div class="highlight" style="background: #f8f8f8; color:#101010;display=inline-block;"><pre style="line-height: 125%"><span></span><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">sklearn.model_selection</span> <span style="color: #008000; font-weight: bold">import</span> train_test_split
+<span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">sklearn.svm</span> <span style="color: #008000; font-weight: bold">import</span> SVC
+
+clf <span style="color: #666666">=</span> SVC( gamma<span style="color: #666666">=0.1</span>, C<span style="color: #666666">=1000</span>, kernel<span style="color: #666666">=</span><span style="color: #BA2121">&#39;poly&#39;</span>, degree <span style="color: #666666">=</span> <span style="color: #666666">2</span> )
+clf<span style="color: #666666">.</span>fit( xsPos <span style="color: #666666">+</span> xsNeg, ysPos <span style="color: #666666">+</span> ysNeg )
+acc <span style="color: #666666">=</span> clf<span style="color: #666666">.</span>predict( xsPos <span style="color: #666666">+</span> xsNeg ) <span style="color: #666666">-</span> ( ysPos <span style="color: #666666">+</span> ysNeg )
+<span style="color: #008000">print</span>(acc)
+</pre></div>
+
+</div><!-- end of jb-input-code jb-render -->
+
+</div>
+<div class="jb-print jb-render">
+<div class="jb-output jb-render code" style="text-align:center">
+<div class="jb-stdout code" style="display:inline-block; width:90%">
+<pre >
+[0 0 0 0 0 0 0]
+</pre>
+</div>
+</div>
+
+</div><!-- end of jb-print jb-render -->
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-c9107994-e8cf-41b3-8ec1-35735506b4f3" ><span id="id-c9107994-e8cf-41b3-8ec1-35735506b4f3"><img id="img-id-c9107994-e8cf-41b3-8ec1-35735506b4f3"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-1e8ad41b-9bbf-404f-a6cd-6ce0205c7487" ><span id="id-1e8ad41b-9bbf-404f-a6cd-6ce0205c7487"><img id="img-id-1e8ad41b-9bbf-404f-a6cd-6ce0205c7487" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00038_frag_00001" data-state="slide_00038_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+
+<div class="jb-output-code jb-render">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-output jb-render">
+<div class="document">
+<div class="jb-text docutils container">
+<p>Note that these results at the moment are totally meaningless.</p>
+<p>You should never use test data to estimate the accuracy of your machine learning algorithm.</p>
+<ul class="simple">
+<li>Split data into test and validation data</li>
+<li>10-fold cross validation</li>
+</ul>
+<p>Presentation of the training data is strongly correlated (positive first, then negative examples).
+Issues in several ML algorithms, but ok for SVMs.</p>
+</div>
+</div>
+
+</div><!-- end of jb-output jb-render -->
+</div><!-- end of jb-output-code jb-render -->
+
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-514cfda0-d4fc-4566-8d8a-c48f97390f43" ><span id="id-514cfda0-d4fc-4566-8d8a-c48f97390f43"><img id="img-id-514cfda0-d4fc-4566-8d8a-c48f97390f43"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-454a7759-d40e-4042-9e15-fa4ca80fbeb0" ><span id="id-454a7759-d40e-4042-9e15-fa4ca80fbeb0"><img id="img-id-454a7759-d40e-4042-9e15-fa4ca80fbeb0" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+<section id="slide_00039_frag_00001" data-state="slide_00039_frag_00001">
+
+
+<!-- Header -->
+  
+
+<!-- Background -->
+
+
+<!-- Slide -->
+<div class="jb-slide">
+<div class="jb-input jb-render jb-code" style="text-align:center">
+
+<!-- start embedded style -->
+
+<!-- end embedded style -->
+<div class="jb-input-code jb-render">
+<div style="font-size:0.5em"><!-- start of style="font-size:0.5em" -->
+<div class="highlight" style="background: #f8f8f8; color:#101010;display=inline-block;"><pre style="line-height: 125%"><span></span><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">sklearn.model_selection</span> <span style="color: #008000; font-weight: bold">import</span> train_test_split
+<span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">sklearn.svm</span> <span style="color: #008000; font-weight: bold">import</span> SVC
+<span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">sklearn.neural_network</span> <span style="color: #008000; font-weight: bold">import</span> MLPClassifier
+
+npfile <span style="color: #666666">=</span> np<span style="color: #666666">.</span>load( <span style="color: #BA2121">&#39;/tmp/data1.npz&#39;</span>)
+
+xs <span style="color: #666666">=</span> npfile[<span style="color: #BA2121">&#39;arr_0&#39;</span>]
+ys <span style="color: #666666">=</span> npfile[<span style="color: #BA2121">&#39;arr_1&#39;</span>]
+
+xTrain, xTest, yTrain, yTest <span style="color: #666666">=</span> train_test_split(xs, ys, test_size<span style="color: #666666">=0.2</span>, random_state<span style="color: #666666">=1</span>)
+
+clf <span style="color: #666666">=</span> SVC( gamma<span style="color: #666666">=0.01</span>, C<span style="color: #666666">=1000</span>, kernel<span style="color: #666666">=</span><span style="color: #BA2121">&#39;poly&#39;</span>, degree <span style="color: #666666">=</span> <span style="color: #666666">2</span> )
+
+<span style="color: #408080; font-style: italic">#clf = MLPClassifier(solver=&#39;lbfgs&#39;, alpha=1.0e-5, hidden_layer_sizes=(4), random_state=1, learning_rate_init=0.1, verbose=True)</span>
+
+<span style="color: #008000">print</span>(<span style="color: #BA2121">&#39;Start training&#39;</span>)
+clf<span style="color: #666666">.</span>fit( xTrain, yTrain )
+
+<span style="color: #408080; font-style: italic">#print(clf.predict(xs))</span>
+
+<span style="color: #008000">print</span>(<span style="color: #BA2121">&#39;Validation Accuracy:&#39;</span>, <span style="color: #008000">len</span>(xTest) <span style="color: #666666">-</span> <span style="color: #008000">sum</span>( ( <span style="color: #008000">abs</span>( clf<span style="color: #666666">.</span>predict( xTest ) <span style="color: #666666">-</span> yTest ) <span style="color: #666666">/</span> <span style="color: #666666">2</span> ) ), 
+      <span style="color: #BA2121">&#39;Training Accuracy:&#39;</span>, <span style="color: #008000">len</span>( xTrain) <span style="color: #666666">-</span> <span style="color: #008000">sum</span>( ( <span style="color: #008000">abs</span>( clf<span style="color: #666666">.</span>predict( xTrain ) <span style="color: #666666">-</span> yTrain ) <span style="color: #666666">/</span> <span style="color: #666666">2</span> ) ) )
+</pre></div>
+
+</div><!-- end of style="font-size:0.5em" -->
+</div><!-- end of jb-input-code jb-render -->
+
+</div>
+<div class="jb-print jb-render">
+<div style="font-size:0.5em"><!-- start of style="font-size:0.5em" -->
+<div class="jb-output jb-render code" style="text-align:center">
+<div class="jb-stdout code" style="display:inline-block; width:90%">
+<pre style="font-size:0.5em">
+Start training
+Validation Accuracy: 2.0 Training Accuracy: 8.0
+</pre>
+</div>
+</div>
+
+</div><!-- end of style="font-size:0.5em" -->
+</div><!-- end of jb-print jb-render -->
+
+</div>
+<!-- Footer -->
+
+<div class="jb-footer-left plain">
+    <span id="id-24628b09-319b-4c7d-8dc9-1e28e76e15c8" ><span id="id-24628b09-319b-4c7d-8dc9-1e28e76e15c8"><img id="img-id-24628b09-319b-4c7d-8dc9-1e28e76e15c8"     src="assets/images/logo.png"/></span>
+</span>
+
+</div>
+<div class="jb-footer-right plain">
+    <span id="id-fcbf9aac-5081-42a7-9f91-307a3805b86b" ><span id="id-fcbf9aac-5081-42a7-9f91-307a3805b86b"><img id="img-id-fcbf9aac-5081-42a7-9f91-307a3805b86b" width="162" height="138"   src="assets/images/robbi.png"/></span>
+</span>
+
+</div>
+
+<aside class="notes">
+
+</aside>
+
+
+
+</section>
+        </div>
+        </div>
+
+        <script src="js/reveal.js"></script>
+
+        <script>
+            // More info about config & dependencies:
+            // - https://github.com/hakimel/reveal.js#configuration
+            // - https://github.com/hakimel/reveal.js#dependencies
+            Reveal.initialize({
+                math: {
+                    mathjax: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js',
+                    config: 'TeX-AMS_HTML-full',  // See http://docs.mathjax.org/en/latest/config-files.html
+                    // tex2jax: {
+                    //     inlineMath: [['$', '$'], ['\(', '\)']],
+                    //     displayMath: [['$$', '$$'], ['\[', '\]']],
+                    //     processEscapes: true,
+                    //     processEnvironments: true,
+                    //     skipTags: ['script', 'noscript', 'style', 'textarea', 'code', 'pre'],
+                    //     displayAlign: 'center',
+                    // }                
+                },
+                dependencies: [
+                    { src: 'plugin/markdown/marked.js' },
+                    { src: 'plugin/markdown/markdown.js' },
+                    { src: 'plugin/notes/notes.js', async: true },
+                    { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+                    { src: 'plugin/math/math.js', async: true }
+                ]
+            });
+        </script>
+
+        <script>
+            <!-- Assets -->
+var assets = {
+"robbi" : new JBImage( "robbi", "12677", "162", "138", null, null, "assets/images/robbi", "png" ),
+"logo" : new JBImage( "logo", "12033", "0", "0", null, null, "assets/images/logo", "png" ),
+"fira-logo-1" : new JBImage( "fira-logo-1", "93836", "0", "0", null, null, "assets/images/FIRA-logo-1", "png" ),
+"pairLogo" : new JBImage( "pairLogo", "63051", "0", "0", null, null, "assets/images/pairLogo", "png" ),
+"target1" : new JBImage( "target1", "84614", "0", "0", "https://cdn2.howtostartanllc.com/images/business-ideas/business-idea-images/Archery-Range.jpg", null, "assets/images/target1", "jpg" ),
+"s2" : new JBImage( "s2", "1246130", "0", "0", null, null, "assets/images/s2", "svg" ),
+"s1" : new JBImage( "s1", "1307206", "0", "0", null, null, "assets/images/s1", "svg" ),
+"s11" : new JBImage( "s11", "1314202", "0", "0", null, null, "assets/images/s11", "svg" ),
+"m1" : new JBImage( "m1", "3112469", "0", "0", null, null, "assets/images/m1", "svg" ),
+"m2" : new JBImage( "m2", "1316695", "0", "0", null, null, "assets/images/m2", "svg" ),
+"ph" : new JBImage( "ph", "31789", "0", "0", null, null, "assets/images/ph", "svg" ),
+"ph2" : new JBImage( "ph2", "29188", "0", "0", null, null, "assets/images/ph2", "svg" ),
+"visHOG2" : new JBImage( "visHOG2", "234969", "0", "0", null, null, "assets/images/visHOG2", "svg" ),
+"visHOG3" : new JBImage( "visHOG3", "1406808", "0", "0", null, null, "assets/images/visHOG3", "svg" ),
+"figLearn" : new JBImage( "figLearn", "943659", "0", "0", null, null, "assets/images/figLearn", "svg" ),
+"c1Fig" : new JBImage( "c1Fig", "517876", "0", "0", null, null, "assets/images/c1Fig", "svg" ) 
+};
+var assetInstances = {
+    "id-353d7e28-8772-4585-b107-454b0a39b8c0": assets["robbi"],
+    "id-26e30e8a-b968-436d-ade5-5ebe247d286f": assets["robbi"],
+    "id-c922dfd7-335c-4e80-a85b-f40ff18a212a": assets["robbi"],
+    "id-f34c58cc-3e10-40f7-8732-9c701764cf1c": assets["robbi"],
+    "id-92c71ac0-806d-482f-8750-cdf0b3e2281c": assets["robbi"],
+    "id-4851b464-c25b-4cfb-b89b-ad305748dbac": assets["robbi"],
+    "id-a152775b-50b6-48b3-abe0-1abd7b4b4237": assets["robbi"],
+    "id-fc1e3a5b-bf86-4296-ba11-f064e37e342c": assets["robbi"],
+    "id-3a977134-431f-42f3-9c0d-58db2eaf78c6": assets["robbi"],
+    "id-00c3d4cb-73e0-4687-9de1-56a6b04cc330": assets["robbi"],
+    "id-1eb965f0-b1e1-446b-8a4f-99de13911613": assets["robbi"],
+    "id-c87e39f2-d4c7-42c5-acfd-b76217dfbab3": assets["robbi"],
+    "id-f3f1d125-0be5-4185-a1df-57ed5815a303": assets["robbi"],
+    "id-8734cc90-5cba-464a-84fe-dbe2ca485cb8": assets["robbi"],
+    "id-0efb2d42-5652-4e0b-97e2-d670478177c9": assets["robbi"],
+    "id-8b729bd9-88e0-4398-97da-ac383370b78e": assets["robbi"],
+    "id-c9b9cf78-0e76-45c0-9aa5-37b56bee2f1f": assets["robbi"],
+    "id-a4582593-5489-40b6-899f-0bcf44a53b9a": assets["robbi"],
+    "id-ff9a5f57-b39d-466e-997d-efdc18302a00": assets["robbi"],
+    "id-478407cd-9969-4ea1-9e9b-e77178e85485": assets["robbi"],
+    "id-844af425-5cc0-42ff-846c-44966ad8ab3c": assets["robbi"],
+    "id-b453da24-b186-46e0-a5fe-45a013c620b0": assets["robbi"],
+    "id-17a2c535-348b-43a4-8f73-9bc911d7f197": assets["robbi"],
+    "id-3c04a7b4-8d8e-437a-9edb-853dee82aafc": assets["robbi"],
+    "id-8448566b-1462-4bfe-a4ea-c982c7a263a7": assets["robbi"],
+    "id-cf5ee81a-fd17-40c4-b930-623d92ecf6ab": assets["robbi"],
+    "id-6b7feec3-dc41-4c40-91a9-6ebc33dfe3d7": assets["robbi"],
+    "id-eb55c758-e120-47c8-b104-a6b5a218e954": assets["robbi"],
+    "id-9abcb73b-cdb6-4dc4-a970-a018c532278e": assets["robbi"],
+    "id-3b67b858-0d5f-4c40-a44a-dcd1eef8a0de": assets["robbi"],
+    "id-08e48d39-98ec-4fbd-a902-81c7518def99": assets["robbi"],
+    "id-8959a733-eaf0-4ad3-9348-34b8d87e2b26": assets["robbi"],
+    "id-555767a0-0a10-4707-9660-2594bf8cf303": assets["robbi"],
+    "id-1c55e421-0ef1-4b63-8193-343e65ba8306": assets["robbi"],
+    "id-ca78f047-8dbd-434d-9993-7b9cfc3da716": assets["robbi"],
+    "id-1e8ad41b-9bbf-404f-a6cd-6ce0205c7487": assets["robbi"],
+    "id-454a7759-d40e-4042-9e15-fa4ca80fbeb0": assets["robbi"],
+    "id-fcbf9aac-5081-42a7-9f91-307a3805b86b": assets["robbi"],
+    "id-6df19e98-06fe-47c7-b624-e27ecb95fc8e": assets["logo"],
+    "id-2e967a3c-f0c5-41bf-89a4-05d8509db1a8": assets["logo"],
+    "id-89ab07b8-fe44-42fe-bed2-a328d63a048f": assets["logo"],
+    "id-dd532837-5aeb-43bf-9e84-b003cf071ded": assets["logo"],
+    "id-17d9259c-b9b8-4794-aaf6-fa7342153f11": assets["logo"],
+    "id-04175317-1e66-4453-839f-e492fd4fbcf0": assets["logo"],
+    "id-408e7e56-ea86-4cd5-adc1-4e97559ba798": assets["logo"],
+    "id-c297f8e1-cd95-47e5-b50a-1b3915fb8eb8": assets["logo"],
+    "id-e323484b-d006-489d-8eed-873de4006ffd": assets["logo"],
+    "id-777f5a9a-8e8f-40b2-8f52-715b4bc97135": assets["logo"],
+    "id-31cd9e33-084e-417a-ba4f-936b7aa6aa22": assets["logo"],
+    "id-7f8f5956-06c0-4a76-aa97-f3db7d91bdae": assets["logo"],
+    "id-c890142b-952d-464a-afd8-392a2dda5b8c": assets["logo"],
+    "id-706f92b3-0871-4ca3-b631-e4d1f78e7540": assets["logo"],
+    "id-9aa83c3d-cd9c-446f-8f95-75bd059ad9d7": assets["logo"],
+    "id-ad3c1063-04d9-49ac-8f96-ef217585a40d": assets["logo"],
+    "id-8f0c6e8e-6d41-4b45-bfe4-eef50e572976": assets["logo"],
+    "id-87a57f45-9402-4909-a40a-65ad3d7af7b3": assets["logo"],
+    "id-e5a69dfd-6de9-4d40-b9d7-65986a7241bf": assets["logo"],
+    "id-9ea07016-b926-4d3b-8fa9-e679ef661106": assets["logo"],
+    "id-c5b5661b-94a6-4751-92fb-9b0c604e89f1": assets["logo"],
+    "id-27c1cd17-0679-4b78-b4c0-0c13ea27fbf7": assets["logo"],
+    "id-93df6d7c-f439-467b-9842-a2b47413cb60": assets["logo"],
+    "id-22fd9cc6-8372-49a2-879e-47b3b89c8143": assets["logo"],
+    "id-0c88fdc9-f773-4c75-8577-518039dad35d": assets["logo"],
+    "id-2263151b-6931-4070-8148-dbb4dfc41a54": assets["logo"],
+    "id-f64d2211-592d-4ec0-beee-db3f6540a64f": assets["logo"],
+    "id-f79614a5-8fc7-4928-a603-b793d504f220": assets["logo"],
+    "id-892b9526-6126-4a22-8fa7-d8452d9a9c52": assets["logo"],
+    "id-1c26ffdd-863a-4c53-a427-eecaa6add5ef": assets["logo"],
+    "id-1df67ade-98c3-45c1-b60c-880ec5b88675": assets["logo"],
+    "id-c80ffe0a-c9dd-4dda-b5f3-4213d63b7e62": assets["logo"],
+    "id-1e20cf5d-f4c8-47f0-a32b-d2e064cd0945": assets["logo"],
+    "id-06283234-9934-411b-b5c9-c6dbde5c71c3": assets["logo"],
+    "id-db693186-7767-408e-913d-e96476b30b25": assets["logo"],
+    "id-c9107994-e8cf-41b3-8ec1-35735506b4f3": assets["logo"],
+    "id-514cfda0-d4fc-4566-8d8a-c48f97390f43": assets["logo"],
+    "id-24628b09-319b-4c7d-8dc9-1e28e76e15c8": assets["logo"],
+    "id-f88d1d4e-5c96-437f-a286-0871a1e1c75d": assets["s2"],
+    "id-c72c403c-f3cc-4a13-96e2-4bae3c3d0389": assets["s1"],
+    "id-2dd41bdf-cb0b-470b-a001-16cfae0b361d": assets["s11"],
+    "id-427bd6b7-0383-4a99-94bb-a3c03463c8d3": assets["m1"],
+    "id-3d2df157-1600-4390-92ad-9291b0a2e127": assets["m2"],
+    "id-beb82056-6a26-4a22-9ea8-24e51e62868b": assets["ph"],
+    "id-c9e3856a-5c0c-4a44-a0b5-50182896a8c5": assets["ph2"],
+    "id-a45c3ba7-5da6-4056-be41-10745a67fde6": assets["visHOG2"],
+    "id-7a829b68-5a37-4e8c-9385-44a88881a884": assets["visHOG3"],
+    "id-ce8b380d-9e2b-4aba-8e63-fcb2bc1fc256": assets["figLearn"],
+    "id-6d13da23-ccf1-465b-b604-9fe46af1f5d5": assets["c1Fig"]
+};
+<!-- End of Assets -->
+
+            convertURLs(assetInstances, "smart-path");
+        </script>
+        <script>
+            <!-- Characters -->
+var characters =
+{};
+<!-- End of Characters -->
+
+        </script>
+    </body>
+</html>
